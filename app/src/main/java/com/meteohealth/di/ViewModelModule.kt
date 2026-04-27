@@ -6,6 +6,8 @@ import com.meteohealth.ui.diary.DiaryViewModel
 import com.meteohealth.ui.forecast.ForecastViewModel
 import com.meteohealth.ui.onboarding.OnboardingViewModel
 import com.meteohealth.ui.recommendations.RecommendationsViewModel
+import com.meteohealth.ui.settings.SettingsViewModel
+import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
@@ -16,4 +18,5 @@ val viewModelModule = module {
     viewModel { ForecastViewModel(get()) }
     viewModel { DiaryViewModel(get(), get(), get()) }
     viewModel { RecommendationsViewModel(get(), get(), get(), get()) }
+    viewModel { SettingsViewModel(get(), get(), androidContext()) }
 }

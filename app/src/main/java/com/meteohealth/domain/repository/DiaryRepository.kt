@@ -8,4 +8,5 @@ interface DiaryRepository {
     fun observeRange(from: Long, to: Long): Flow<List<DiaryEntry>>
     suspend fun save(entry: DiaryEntry): Long
     suspend fun delete(entry: DiaryEntry)
+    suspend fun clearAll()
 }
