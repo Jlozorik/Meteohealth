@@ -21,4 +21,7 @@ interface DiaryEntryDao {
 
     @Delete
     suspend fun delete(entry: DiaryEntryEntity)
+
+    @Query("DELETE FROM diary_entry")
+    suspend fun deleteAll()
 }

@@ -15,6 +15,7 @@ import com.meteohealth.ui.diary.DiaryListScreen
 import com.meteohealth.ui.forecast.ForecastScreen
 import com.meteohealth.ui.onboarding.OnboardingScreen
 import com.meteohealth.ui.recommendations.RecommendationsScreen
+import com.meteohealth.ui.settings.SettingsScreen
 
 @Composable
 fun AppNavGraph(
@@ -62,7 +63,7 @@ fun AppNavGraph(
                 RecommendationsScreen()
             }
             composable(NavRoutes.SETTINGS) {
-                androidx.compose.material3.Text("Настройки — скоро")
+                SettingsScreen()
             }
         }
     }

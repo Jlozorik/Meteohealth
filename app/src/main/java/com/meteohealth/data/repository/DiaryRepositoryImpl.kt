@@ -24,6 +24,8 @@ class DiaryRepositoryImpl(
     override suspend fun delete(entry: DiaryEntry) =
         dao.delete(entry.toEntity())
 
+    override suspend fun clearAll() = dao.deleteAll()
+
     private fun DiaryEntryEntity.toDomain() = DiaryEntry(
         id = id,
         timestamp = timestamp,
