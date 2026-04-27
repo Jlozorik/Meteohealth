@@ -12,6 +12,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import com.meteohealth.ui.dashboard.DashboardScreen
 import com.meteohealth.ui.diary.DiaryAddScreen
 import com.meteohealth.ui.diary.DiaryListScreen
+import com.meteohealth.ui.diary.TriggersScreen
 import com.meteohealth.ui.forecast.ForecastScreen
 import com.meteohealth.ui.onboarding.OnboardingScreen
 import com.meteohealth.ui.recommendations.RecommendationsScreen
@@ -27,7 +28,9 @@ fun AppNavGraph(
 
     Scaffold(
         bottomBar = {
-            val hideBar = currentRoute == NavRoutes.ONBOARDING || currentRoute == NavRoutes.DIARY_ADD
+            val hideBar = currentRoute == NavRoutes.ONBOARDING
+                || currentRoute == NavRoutes.DIARY_ADD
+                || currentRoute == NavRoutes.TRIGGERS
             if (!hideBar) {
                 BottomNavBar(navController = navController, currentRoute = currentRoute)
             }
@@ -54,7 +57,13 @@ fun AppNavGraph(
                 ForecastScreen()
             }
             composable(NavRoutes.DIARY) {
-                DiaryListScreen(onAddClick = { navController.navigate(NavRoutes.DIARY_ADD) })
+                DiaryListScreen(
+                    onAddClick = { navController.navigate(NavRoutes.DIARY_ADD) },
+                    onTriggersClick = { navController.navigate(NavRoutes.TRIGGERS) }
+                )
+            }
+            composable(NavRoutes.TRIGGERS) {
+                TriggersScreen(onBack = { navController.popBackStack() })
             }
             composable(NavRoutes.DIARY_ADD) {
                 DiaryAddScreen(onBack = { navController.popBackStack() })
