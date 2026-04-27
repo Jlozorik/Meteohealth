@@ -8,4 +8,5 @@ object NavRoutes {
     const val DIARY_ADD = "diary/add"
     const val RECOMMENDATIONS = "recommendations"
     const val SETTINGS = "settings"
+    const val TRIGGERS = "diary/triggers"
 }
