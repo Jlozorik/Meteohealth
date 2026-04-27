@@ -10,6 +10,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.meteohealth.ui.dashboard.DashboardScreen
+import com.meteohealth.ui.forecast.ForecastScreen
 import com.meteohealth.ui.onboarding.OnboardingScreen
 
 @Composable
@@ -45,7 +46,7 @@ fun AppNavGraph(
                 DashboardScreen()
             }
             composable(NavRoutes.FORECAST) {
-                androidx.compose.material3.Text("Прогноз — скоро")
+                ForecastScreen()
             }
             composable(NavRoutes.DIARY) {
                 androidx.compose.material3.Text("Дневник — скоро")
