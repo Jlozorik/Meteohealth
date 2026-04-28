@@ -3,6 +3,10 @@ package com.meteohealth.ui.settings
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.Constraints
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.meteohealth.domain.model.PressureUnit
 import com.meteohealth.domain.model.UserProfile
@@ -13,6 +17,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.util.concurrent.TimeUnit
 
 class SettingsViewModel(
     private val userProfileRepository: UserProfileRepository,
@@ -26,9 +31,22 @@ class SettingsViewModel(
     fun setNotificationsEnabled(enabled: Boolean) {
         viewModelScope.launch {
             userProfileRepository.save(profile.value.copy(notificationsEnabled = enabled))
-            if (!enabled) {
-                WorkManager.getInstance(context)
-                    .cancelUniqueWork(WeatherSyncWorker.WORK_NAME)
+            val wm = WorkManager.getInstance(context)
+            if (enabled) {
+                val request = PeriodicWorkRequestBuilder<WeatherSyncWorker>(3, TimeUnit.HOURS)
+                    .setConstraints(
+                        Constraints.Builder()
+                            .setRequiredNetworkType(NetworkType.CONNECTED)
+                            .build()
+                    )
+                    .build()
+                wm.enqueueUniquePeriodicWork(
+                    WeatherSyncWorker.WORK_NAME,
+                    ExistingPeriodicWorkPolicy.KEEP,
+                    request
+                )
+            } else {
+                wm.cancelUniqueWork(WeatherSyncWorker.WORK_NAME)
             }
         }
     }
