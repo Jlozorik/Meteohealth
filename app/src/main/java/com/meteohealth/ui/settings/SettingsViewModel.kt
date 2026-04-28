@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.WorkManager
+import com.meteohealth.domain.model.PressureUnit
 import com.meteohealth.domain.model.UserProfile
 import com.meteohealth.domain.repository.DiaryRepository
 import com.meteohealth.domain.repository.UserProfileRepository
@@ -29,6 +30,18 @@ class SettingsViewModel(
                 WorkManager.getInstance(context)
                     .cancelUniqueWork(WeatherSyncWorker.WORK_NAME)
             }
+        }
+    }
+
+    fun setDarkTheme(enabled: Boolean) {
+        viewModelScope.launch {
+            userProfileRepository.save(profile.value.copy(isDarkTheme = enabled))
+        }
+    }
+
+    fun setPressureUnit(unit: PressureUnit) {
+        viewModelScope.launch {
+            userProfileRepository.save(profile.value.copy(pressureUnit = unit))
         }
     }
 

@@ -13,8 +13,10 @@ class MainViewModel(
 ) : ViewModel() {
 
     val startDestination = userProfileRepository.observe()
-        .map { profile ->
-            if (profile.onboardingCompleted) NavRoutes.DASHBOARD else NavRoutes.ONBOARDING
-        }
+        .map { if (it.onboardingCompleted) NavRoutes.DASHBOARD else NavRoutes.ONBOARDING }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    val isDarkTheme = userProfileRepository.observe()
+        .map { it.isDarkTheme }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
 }

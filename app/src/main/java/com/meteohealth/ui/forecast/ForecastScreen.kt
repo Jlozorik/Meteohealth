@@ -1,5 +1,8 @@
 package com.meteohealth.ui.forecast
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,28 +12,35 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.meteohealth.domain.model.ForecastDay
+import com.meteohealth.ui.theme.WellbeingDanger
+import com.meteohealth.ui.theme.WellbeingGood
+import com.meteohealth.ui.theme.WellbeingModerate
+import com.meteohealth.ui.theme.WellbeingPoor
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
 import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
@@ -46,33 +56,53 @@ import java.util.Locale
 fun ForecastScreen(viewModel: ForecastViewModel = koinViewModel()) {
     val state by viewModel.uiState.collectAsState()
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        TopAppBar(
-            title = { Text("Прогноз", style = MaterialTheme.typography.titleLarge) },
-            actions = {
-                IconButton(onClick = viewModel::load) {
-                    Icon(Icons.Default.Refresh, contentDescription = "Обновить")
-                }
-            }
-        )
-
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Прогноз", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold) },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                )
+            )
+        },
+        containerColor = MaterialTheme.colorScheme.background
+    ) { innerPadding ->
         when {
-            state.isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-            state.error -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            state.isLoading -> Box(
+                Modifier.fillMaxSize().padding(innerPadding),
+                contentAlignment = Alignment.Center
+            ) { CircularProgressIndicator(color = MaterialTheme.colorScheme.primary) }
+
+            state.error -> Box(
+                Modifier.fillMaxSize().padding(innerPadding),
+                contentAlignment = Alignment.Center
+            ) {
                 Text(
                     "Не удалось загрузить прогноз",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            else -> LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+
+            else -> PullToRefreshBox(
+                isRefreshing = false,
+                onRefresh = viewModel::load,
+                modifier = Modifier.fillMaxSize().padding(innerPadding)
             ) {
-                items(state.days) { day ->
-                    ForecastDayCard(day)
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    itemsIndexed(state.days) { index, day ->
+                        var visible by remember { mutableStateOf(false) }
+                        LaunchedEffect(Unit) { visible = true }
+                        AnimatedVisibility(
+                            visible = visible,
+                            enter = fadeIn() + slideInVertically(initialOffsetY = { it / 3 })
+                        ) {
+                            ForecastDayCard(day)
+                        }
+                    }
                 }
             }
         }
@@ -89,8 +119,21 @@ private fun ForecastDayCard(day: ForecastDay) {
         }
     }
 
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    val wellbeingColor = when {
+        day.wellbeingIndex >= 80 -> WellbeingGood
+        day.wellbeingIndex >= 60 -> WellbeingModerate
+        day.wellbeingIndex >= 40 -> WellbeingPoor
+        else                     -> WellbeingDanger
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(10.dp, RoundedCornerShape(20.dp), spotColor = wellbeingColor.copy(alpha = 0.2f)),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -101,17 +144,18 @@ private fun ForecastDayCard(day: ForecastDay) {
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
-                WellbeingBadge(day.wellbeingIndex)
+                WellbeingBadge(day.wellbeingIndex, wellbeingColor)
             }
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = "${day.minTempCelsius.toInt()}° / ${day.maxTempCelsius.toInt()}°C",
-                    style = MaterialTheme.typography.bodyLarge
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium
                 )
                 day.slots.firstOrNull()?.let { slot ->
                     Text(
@@ -132,13 +176,7 @@ private fun ForecastDayCard(day: ForecastDay) {
 }
 
 @Composable
-private fun WellbeingBadge(index: Int) {
-    val color = when {
-        index >= 80 -> MaterialTheme.colorScheme.primary
-        index >= 60 -> Color(0xFFF9A825)
-        index >= 40 -> Color(0xFFEF6C00)
-        else -> MaterialTheme.colorScheme.error
-    }
+private fun WellbeingBadge(index: Int, color: androidx.compose.ui.graphics.Color) {
     Text(
         text = "$index",
         style = MaterialTheme.typography.titleMedium,

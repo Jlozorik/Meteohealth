@@ -1,5 +1,10 @@
 package com.meteohealth.ui.navigation
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -39,7 +44,12 @@ fun AppNavGraph(
         NavHost(
             navController = navController,
             startDestination = startDestination,
-            modifier = Modifier.padding(innerPadding)
+            // Только bottom padding — каждый экран сам обрабатывает системные insets через свой Scaffold/TopAppBar
+            modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding()),
+            enterTransition = { fadeIn(tween(220)) + slideInHorizontally(tween(220)) { it / 12 } },
+            exitTransition = { fadeOut(tween(180)) },
+            popEnterTransition = { fadeIn(tween(220)) },
+            popExitTransition = { fadeOut(tween(180)) + slideOutHorizontally(tween(220)) { it / 12 } }
         ) {
             composable(NavRoutes.ONBOARDING) {
                 OnboardingScreen(
@@ -50,12 +60,8 @@ fun AppNavGraph(
                     }
                 )
             }
-            composable(NavRoutes.DASHBOARD) {
-                DashboardScreen()
-            }
-            composable(NavRoutes.FORECAST) {
-                ForecastScreen()
-            }
+            composable(NavRoutes.DASHBOARD) { DashboardScreen() }
+            composable(NavRoutes.FORECAST) { ForecastScreen() }
             composable(NavRoutes.DIARY) {
                 DiaryListScreen(
                     onAddClick = { navController.navigate(NavRoutes.DIARY_ADD) },
@@ -68,12 +74,8 @@ fun AppNavGraph(
             composable(NavRoutes.DIARY_ADD) {
                 DiaryAddScreen(onBack = { navController.popBackStack() })
             }
-            composable(NavRoutes.RECOMMENDATIONS) {
-                RecommendationsScreen()
-            }
-            composable(NavRoutes.SETTINGS) {
-                SettingsScreen()
-            }
+            composable(NavRoutes.RECOMMENDATIONS) { RecommendationsScreen() }
+            composable(NavRoutes.SETTINGS) { SettingsScreen() }
         }
     }
 }

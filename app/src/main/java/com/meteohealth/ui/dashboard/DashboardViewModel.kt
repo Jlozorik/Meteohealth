@@ -8,6 +8,7 @@ import com.meteohealth.domain.model.WeatherSnapshot
 import com.meteohealth.domain.repository.KpRepository
 import com.meteohealth.domain.repository.UserProfileRepository
 import com.meteohealth.domain.repository.WeatherRepository
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -19,7 +20,8 @@ data class DashboardUiState(
     val kpIndex: Float? = null,
     val wellbeingIndex: Int? = null,
     val profile: UserProfile = UserProfile(),
-    val isLoading: Boolean = true
+    val isLoading: Boolean = true,
+    val isRefreshing: Boolean = false
 )
 
 class DashboardViewModel(
@@ -28,11 +30,14 @@ class DashboardViewModel(
     private val userProfileRepository: UserProfileRepository
 ) : ViewModel() {
 
+    private val _isRefreshing = MutableStateFlow(false)
+
     val uiState: StateFlow<DashboardUiState> = combine(
         weatherRepository.observeCurrentWeather(),
         kpRepository.observeLatestKp(),
-        userProfileRepository.observe()
-    ) { weather, kp, profile ->
+        userProfileRepository.observe(),
+        _isRefreshing
+    ) { weather, kp, profile, refreshing ->
         DashboardUiState(
             weather = weather,
             kpIndex = kp,
@@ -46,7 +51,8 @@ class DashboardViewModel(
                 )
             } else null,
             profile = profile,
-            isLoading = false
+            isLoading = false,
+            isRefreshing = refreshing
         )
     }.stateIn(
         viewModelScope,
@@ -60,9 +66,10 @@ class DashboardViewModel(
 
     fun refresh() {
         viewModelScope.launch {
-            // Москва по умолчанию; координаты будут настраиваться в Settings
+            _isRefreshing.value = true
             weatherRepository.refreshWeather(55.75, 37.62)
             kpRepository.refreshKp()
+            _isRefreshing.value = false
         }
     }
 }
