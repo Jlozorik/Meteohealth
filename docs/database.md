@@ -2,7 +2,14 @@
 
 ## Технология
 
-Локальное хранилище реализовано на **Room 2.7.1** с генерацией кода через **KSP** (Kotlin Symbol Processing). База данных — одна: `AppDatabase` (версия 1, схема экспортируется в `/schemas`).
+Локальное хранилище реализовано на **Room 2.7.1** с генерацией кода через **KSP** (Kotlin Symbol Processing). База данных — одна: `AppDatabase` (версия 3, схема экспортируется в `/schemas`).
+
+## Миграции
+
+| Версия | Изменение |
+|---|---|
+| 1 → 2 | `ALTER TABLE user_profile ADD COLUMN pressureUnit TEXT NOT NULL DEFAULT 'MMHG'` |
+| 2 → 3 | `ALTER TABLE user_profile ADD COLUMN isDarkTheme INTEGER NOT NULL DEFAULT 1` |
 
 ## Таблицы
 
@@ -21,6 +28,8 @@
 | notificationsEnabled | INTEGER (Boolean) | Уведомления включены |
 | notificationThreshold | INTEGER | Порог индекса (0–100) для уведомлений |
 | onboardingCompleted | INTEGER (Boolean) | Онбординг пройден |
+| pressureUnit | TEXT | Единица давления: `HPA` или `MMHG` (default: MMHG) |
+| isDarkTheme | INTEGER (Boolean) | Тёмная тема включена (default: 1) |
 
 ### weather_cache
 
