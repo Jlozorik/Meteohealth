@@ -9,5 +9,7 @@ data class UserProfile(
     val hasRespiratoryIssues: Boolean = false,
     val notificationsEnabled: Boolean = true,
     val notificationThreshold: Int = 60,
-    val onboardingCompleted: Boolean = false
+    val onboardingCompleted: Boolean = false,
+    val pressureUnit: PressureUnit = PressureUnit.MMHG,
+    val isDarkTheme: Boolean = true
 )

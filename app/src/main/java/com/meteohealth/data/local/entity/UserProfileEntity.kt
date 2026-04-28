@@ -1,5 +1,6 @@
 package com.meteohealth.data.local.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -13,5 +14,7 @@ data class UserProfileEntity(
     val hasRespiratoryIssues: Boolean = false,
     val notificationsEnabled: Boolean = true,
     val notificationThreshold: Int = 60,
-    val onboardingCompleted: Boolean = false
+    val onboardingCompleted: Boolean = false,
+    @ColumnInfo(defaultValue = "MMHG") val pressureUnit: String = "MMHG",
+    @ColumnInfo(defaultValue = "1") val isDarkTheme: Boolean = true
 )

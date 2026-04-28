@@ -13,17 +13,18 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.QueryStats
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -32,9 +33,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.meteohealth.domain.model.DiaryEntry
+import com.meteohealth.domain.model.PressureUnit
 import com.meteohealth.domain.model.WellbeingLevel
+import com.meteohealth.domain.model.toDisplayPressure
 import org.koin.androidx.compose.koinViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -48,18 +52,23 @@ fun DiaryListScreen(
     viewModel: DiaryViewModel = koinViewModel()
 ) {
     val entries by viewModel.entries.collectAsState()
+    val pressureUnit by viewModel.pressureUnit.collectAsState()
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Дневник", style = MaterialTheme.typography.titleLarge) },
+                title = { Text("Дневник", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold) },
                 actions = {
                     IconButton(onClick = onTriggersClick) {
                         Icon(Icons.Default.QueryStats, contentDescription = "Анализ триггеров")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                )
             )
         },
+        containerColor = MaterialTheme.colorScheme.background,
         floatingActionButton = {
             FloatingActionButton(onClick = onAddClick) {
                 Icon(Icons.Default.Add, contentDescription = "Добавить запись")
@@ -79,12 +88,18 @@ fun DiaryListScreen(
             }
         } else {
             LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(innerPadding)
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(entries, key = { it.id }) { entry ->
-                    SwipeToDismissEntry(entry = entry, onDelete = { viewModel.delete(entry) })
+                    SwipeToDismissEntry(
+                        entry = entry,
+                        pressureUnit = pressureUnit,
+                        onDelete = { viewModel.delete(entry) }
+                    )
                 }
             }
         }
@@ -93,13 +108,11 @@ fun DiaryListScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SwipeToDismissEntry(entry: DiaryEntry, onDelete: () -> Unit) {
+private fun SwipeToDismissEntry(entry: DiaryEntry, pressureUnit: PressureUnit, onDelete: () -> Unit) {
     val dismissState = rememberSwipeToDismissBoxState()
 
     LaunchedEffect(dismissState.currentValue) {
-        if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) {
-            onDelete()
-        }
+        if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) onDelete()
     }
 
     SwipeToDismissBox(
@@ -110,20 +123,16 @@ private fun SwipeToDismissEntry(entry: DiaryEntry, onDelete: () -> Unit) {
                 modifier = Modifier.fillMaxSize().padding(end = 20.dp),
                 contentAlignment = Alignment.CenterEnd
             ) {
-                Icon(
-                    Icons.Default.Delete,
-                    contentDescription = "Удалить",
-                    tint = MaterialTheme.colorScheme.error
-                )
+                Icon(Icons.Default.Delete, contentDescription = "Удалить", tint = MaterialTheme.colorScheme.error)
             }
         }
     ) {
-        DiaryEntryCard(entry)
+        DiaryEntryCard(entry, pressureUnit)
     }
 }
 
 @Composable
-private fun DiaryEntryCard(entry: DiaryEntry) {
+private fun DiaryEntryCard(entry: DiaryEntry, pressureUnit: PressureUnit) {
     val (color, label) = wellbeingColor(entry.wellbeingLevel)
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -137,11 +146,7 @@ private fun DiaryEntryCard(entry: DiaryEntry) {
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.labelLarge,
-                    color = color
-                )
+                Text(text = label, style = MaterialTheme.typography.labelLarge, color = color)
             }
             if (entry.symptoms.isNotBlank()) {
                 Text(
@@ -154,8 +159,9 @@ private fun DiaryEntryCard(entry: DiaryEntry) {
                 Text(text = entry.notes, style = MaterialTheme.typography.bodyMedium)
             }
             entry.temperatureCelsius?.let { temp ->
+                val pressureStr = entry.pressureHpa?.toDisplayPressure(pressureUnit) ?: "—"
                 Text(
-                    text = "${temp.toInt()}°C · ${entry.pressureHpa?.toInt() ?: "—"} гПа",
+                    text = "${temp.toInt()}°C · $pressureStr",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -166,10 +172,10 @@ private fun DiaryEntryCard(entry: DiaryEntry) {
 
 @Composable
 private fun wellbeingColor(level: WellbeingLevel): Pair<Color, String> = when (level) {
-    WellbeingLevel.GREAT -> MaterialTheme.colorScheme.primary to "Отлично"
-    WellbeingLevel.GOOD -> Color(0xFF4CAF50) to "Хорошо"
-    WellbeingLevel.FAIR -> Color(0xFFF9A825) to "Нормально"
-    WellbeingLevel.POOR -> Color(0xFFEF6C00) to "Плохо"
+    WellbeingLevel.GREAT    -> MaterialTheme.colorScheme.primary to "Отлично"
+    WellbeingLevel.GOOD     -> Color(0xFF4CAF50) to "Хорошо"
+    WellbeingLevel.FAIR     -> Color(0xFFF9A825) to "Нормально"
+    WellbeingLevel.POOR     -> Color(0xFFEF6C00) to "Плохо"
     WellbeingLevel.TERRIBLE -> MaterialTheme.colorScheme.error to "Ужасно"
 }
 

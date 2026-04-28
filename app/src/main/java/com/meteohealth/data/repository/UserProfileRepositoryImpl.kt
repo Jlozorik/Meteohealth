@@ -27,7 +27,10 @@ class UserProfileRepositoryImpl(
         hasRespiratoryIssues = hasRespiratoryIssues,
         notificationsEnabled = notificationsEnabled,
         notificationThreshold = notificationThreshold,
-        onboardingCompleted = onboardingCompleted
+        onboardingCompleted = onboardingCompleted,
+        pressureUnit = runCatching { com.meteohealth.domain.model.PressureUnit.valueOf(pressureUnit) }
+            .getOrDefault(com.meteohealth.domain.model.PressureUnit.MMHG),
+        isDarkTheme = isDarkTheme
     )
 
     private fun UserProfile.toEntity() = UserProfileEntity(
@@ -39,6 +42,8 @@ class UserProfileRepositoryImpl(
         hasRespiratoryIssues = hasRespiratoryIssues,
         notificationsEnabled = notificationsEnabled,
         notificationThreshold = notificationThreshold,
-        onboardingCompleted = onboardingCompleted
+        onboardingCompleted = onboardingCompleted,
+        pressureUnit = pressureUnit.name,
+        isDarkTheme = isDarkTheme
     )
 }

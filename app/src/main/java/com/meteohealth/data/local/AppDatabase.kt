@@ -2,6 +2,8 @@ package com.meteohealth.data.local
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.meteohealth.data.local.dao.DiaryEntryDao
 import com.meteohealth.data.local.dao.KpCacheDao
 import com.meteohealth.data.local.dao.NotificationLogDao
@@ -21,7 +23,7 @@ import com.meteohealth.data.local.entity.WeatherCacheEntity
         KpCacheEntity::class,
         NotificationLogEntity::class
     ],
-    version = 1,
+    version = 3,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -30,4 +32,17 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun diaryEntryDao(): DiaryEntryDao
     abstract fun kpCacheDao(): KpCacheDao
     abstract fun notificationLogDao(): NotificationLogDao
+
+    companion object {
+        val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE user_profile ADD COLUMN pressureUnit TEXT NOT NULL DEFAULT 'MMHG'")
+            }
+        }
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE user_profile ADD COLUMN isDarkTheme INTEGER NOT NULL DEFAULT 1")
+            }
+        }
+    }
 }

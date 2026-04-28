@@ -17,7 +17,7 @@ val viewModelModule = module {
     viewModel { OnboardingViewModel(get()) }
     viewModel { DashboardViewModel(get(), get(), get()) }
     viewModel { ForecastViewModel(get()) }
-    viewModel { DiaryViewModel(get(), get(), get()) }
+    viewModel { DiaryViewModel(get(), get(), get(), get()) }
     viewModel { TriggersViewModel(get()) }
     viewModel { RecommendationsViewModel(get(), get(), get(), get()) }
     viewModel { SettingsViewModel(get(), get(), androidContext()) }
