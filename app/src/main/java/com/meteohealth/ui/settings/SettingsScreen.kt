@@ -12,7 +12,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -129,7 +128,15 @@ fun SettingsScreen(viewModel: SettingsViewModel = koinViewModel()) {
                         SegmentedButton(
                             selected = profile.pressureUnit == unit,
                             onClick = { viewModel.setPressureUnit(unit) },
-                            shape = SegmentedButtonDefaults.itemShape(index = index, count = 2)
+                            shape = SegmentedButtonDefaults.itemShape(index = index, count = 2),
+                            colors = SegmentedButtonDefaults.colors(
+                                activeContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                activeContentColor = MaterialTheme.colorScheme.primary,
+                                activeBorderColor = MaterialTheme.colorScheme.primary,
+                                inactiveContainerColor = MaterialTheme.colorScheme.surface,
+                                inactiveContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                inactiveBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                            )
                         ) {
                             Text(label)
                         }
@@ -143,16 +150,18 @@ fun SettingsScreen(viewModel: SettingsViewModel = koinViewModel()) {
             SectionHeader("Данные")
             Spacer(Modifier.height(12.dp))
 
-            Button(
+            OutlinedButton(
                 onClick = { showClearDialog = true },
-                modifier = Modifier.fillMaxWidth().height(52.dp),
+                modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer,
-                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.error
+                ),
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.4f)
                 )
             ) {
-                Text("Очистить дневник", fontWeight = FontWeight.Medium)
+                Text("Очистить дневник", style = MaterialTheme.typography.bodyMedium)
             }
 
             Spacer(Modifier.height(6.dp))
