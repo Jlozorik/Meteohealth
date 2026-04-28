@@ -1,6 +1,7 @@
 package com.meteohealth.ui.navigation
 
 object NavRoutes {
+    const val SPLASH = "splash"
     const val ONBOARDING = "onboarding"
     const val DASHBOARD = "dashboard"
     const val FORECAST = "forecast"

@@ -22,18 +22,21 @@ import com.meteohealth.ui.forecast.ForecastScreen
 import com.meteohealth.ui.onboarding.OnboardingScreen
 import com.meteohealth.ui.recommendations.RecommendationsScreen
 import com.meteohealth.ui.settings.SettingsScreen
+import com.meteohealth.ui.splash.SplashScreen
 
 @Composable
 fun AppNavGraph(
     navController: NavHostController,
-    startDestination: String
+    startDestination: String,
+    realStartDestination: String?
 ) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
 
     Scaffold(
         bottomBar = {
-            val hideBar = currentRoute == NavRoutes.ONBOARDING
+            val hideBar = currentRoute == NavRoutes.SPLASH
+                || currentRoute == NavRoutes.ONBOARDING
                 || currentRoute == NavRoutes.DIARY_ADD
                 || currentRoute == NavRoutes.TRIGGERS
             if (!hideBar) {
@@ -51,6 +54,19 @@ fun AppNavGraph(
             popEnterTransition = { fadeIn(tween(220)) },
             popExitTransition = { fadeOut(tween(180)) + slideOutHorizontally(tween(220)) { it / 12 } }
         ) {
+            composable(
+                route = NavRoutes.SPLASH,
+                exitTransition = { fadeOut(tween(600)) }
+            ) {
+                SplashScreen(
+                    realDestination = realStartDestination,
+                    onFinished = { destination ->
+                        navController.navigate(destination) {
+                            popUpTo(NavRoutes.SPLASH) { inclusive = true }
+                        }
+                    }
+                )
+            }
             composable(NavRoutes.ONBOARDING) {
                 OnboardingScreen(
                     onFinish = {
