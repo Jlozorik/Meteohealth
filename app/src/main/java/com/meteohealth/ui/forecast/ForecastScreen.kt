@@ -3,6 +3,7 @@ package com.meteohealth.ui.forecast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -100,7 +102,10 @@ fun ForecastScreen(viewModel: ForecastViewModel = koinViewModel()) {
                             visible = visible,
                             enter = fadeIn() + slideInVertically(initialOffsetY = { it / 3 })
                         ) {
-                            ForecastDayCard(day)
+                            ForecastDayCard(
+                                day = day,
+                                personalIndex = state.personalIndices[day.dateMillis]
+                            )
                         }
                     }
                 }
@@ -110,7 +115,7 @@ fun ForecastScreen(viewModel: ForecastViewModel = koinViewModel()) {
 }
 
 @Composable
-private fun ForecastDayCard(day: ForecastDay) {
+private fun ForecastDayCard(day: ForecastDay, personalIndex: Int? = null) {
     val modelProducer = remember { CartesianChartModelProducer() }
 
     LaunchedEffect(day) {
@@ -144,7 +149,15 @@ private fun ForecastDayCard(day: ForecastDay) {
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
-                WellbeingBadge(day.wellbeingIndex, wellbeingColor)
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (personalIndex != null) {
+                        PersonalIndexBadge(personalIndex)
+                    }
+                    WellbeingBadge(day.wellbeingIndex, wellbeingColor)
+                }
             }
 
             Row(
@@ -183,6 +196,36 @@ private fun WellbeingBadge(index: Int, color: androidx.compose.ui.graphics.Color
         fontWeight = FontWeight.Bold,
         color = color
     )
+}
+
+@Composable
+private fun PersonalIndexBadge(index: Int) {
+    val color = when {
+        index >= 80 -> WellbeingGood
+        index >= 60 -> WellbeingModerate
+        index >= 40 -> WellbeingPoor
+        else        -> WellbeingDanger
+    }
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .background(color.copy(alpha = 0.12f))
+            .padding(horizontal = 8.dp, vertical = 3.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "личный",
+            style = MaterialTheme.typography.labelSmall,
+            color = color.copy(alpha = 0.8f)
+        )
+        Text(
+            text = "$index",
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Bold,
+            color = color
+        )
+    }
 }
 
 private fun formatDate(millis: Long): String {

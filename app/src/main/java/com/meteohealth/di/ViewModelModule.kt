@@ -16,7 +16,7 @@ val viewModelModule = module {
     viewModel { MainViewModel(get()) }
     viewModel { OnboardingViewModel(get()) }
     viewModel { DashboardViewModel(get(), get(), get()) }
-    viewModel { ForecastViewModel(get()) }
+    viewModel { ForecastViewModel(get(), get()) }
     viewModel { DiaryViewModel(get(), get(), get(), get()) }
     viewModel { TriggersViewModel(get()) }
     viewModel { RecommendationsViewModel(get(), get(), get(), get()) }
