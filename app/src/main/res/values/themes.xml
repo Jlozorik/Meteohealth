@@ -2,4 +2,12 @@
 <resources>
 
     <style name="Theme.Meteohealth" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <style name="Theme.Meteohealth.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#0A0E1A</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/meteohealth_logo</item>
+        <item name="windowSplashScreenIconBackgroundColor">#0A0E1A</item>
+        <item name="postSplashScreenTheme">@style/Theme.Meteohealth</item>
+    </style>
+
 </resources>
