@@ -2,7 +2,7 @@
 
 ## Что сделано
 
-Все 15 шагов реализованы и закоммичены:
+Все функции реализованы и закоммичены:
 
 | Шаг | Содержание | Коммит |
 |-----|-----------|--------|
@@ -19,19 +19,19 @@
 | 13 | Принудительная тёмная тема | `2090861` |
 | 14–15 | /docs + тесты WellbeingCalculator | `a24872b` |
 | — | Единицы давления + светлая тема + рефактор UI | `b37eeef` |
+| — | ML-предиктор: линейная регрессия по дневнику | `4dacc68` |
 
-## В работе
+## Текущее состояние
 
-Ничего — проект в актуальном состоянии, рабочее дерево чистое.
+Проект завершён. Рабочее дерево чистое.
 
-## Последние изменения (коммит b37eeef)
+## Ключевые компоненты
 
-- `PressureUnit` (гПа/мм рт.ст.) — новая доменная модель + `toDisplayPressure()`
-- Светлая тема: полная `LightColorScheme`, все `LightXxx`-цвета
-- `isDarkTheme` в `UserProfile` + переключатель в Settings
-- Room v3: миграции 1→2 (pressureUnit) и 2→3 (isDarkTheme)
-- Дашборд: `PullToRefreshBox`, анимация индекса, цвета по уровню благополучия
-- Settings: секции «Внешний вид» и «Единицы измерения»
+- `WellbeingCalculator` — формульный индекс (0–100) с персональными штрафами по профилю
+- `TriggerAnalyzer` — корреляция Пирсона (ретроспективный анализ)
+- `WellbeingPredictor` — OLS-регрессия, обучается на дневнике, предсказывает персональный индекс в прогнозе
+- `WeatherSyncWorker` — фоновая синхронизация каждые 3 ч + уведомления
+- Room v3: таблицы user_profile, weather_cache, diary_entry, kp_cache, notification_log
 
 ## Известные нюансы
 
@@ -39,4 +39,5 @@
 - WorkManager инициализируется вручную через `KoinWorkerFactory` в `App.onCreate()`
 - OWM возвращает давление в гПа; конвертация в мм рт.ст. — `toDisplayPressure()`
 - `HorizontalPager` из `androidx.compose.foundation.pager` (не Accompanist)
-- Room exportSchema = true; схемы в `app/schemas/`
+- JAVA_HOME для сборки: `/opt/android-studio/jbr`
+- WellbeingPredictor требует ≥10 записей дневника с полными метеоданными
