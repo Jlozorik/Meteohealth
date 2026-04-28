@@ -47,7 +47,7 @@ com.meteohealth/
 
 Содержит только Kotlin-классы без Android-зависимостей:
 
-- **Доменные модели** — `DiaryEntry`, `UserProfile`, `WeatherSnapshot`, `ForecastDay`, `WellbeingLevel`, `Recommendation`.
+- **Доменные модели** — `DiaryEntry`, `UserProfile`, `WeatherSnapshot`, `ForecastDay`, `WellbeingLevel`, `Recommendation`, `PressureUnit`.
 - **Интерфейсы репозиториев** — `DiaryRepository`, `WeatherRepository`, `KpRepository`, `UserProfileRepository`.
 - **WellbeingCalculator** — вычисляет индекс самочувствия (0–100).
 - **TriggerAnalyzer** — корреляция Пирсона между записями дневника и погодными факторами.
