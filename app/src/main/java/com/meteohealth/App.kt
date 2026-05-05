@@ -31,7 +31,7 @@ class App : Application() {
                 .setWorkerFactory(KoinWorkerFactory())
                 .build()
         )
-        NotificationHelper.createChannel(this)
+        NotificationHelper.createChannels(this)
         scheduleWeatherSync()
     }
 

@@ -2,14 +2,16 @@
 
 ## Технология
 
-Локальное хранилище реализовано на **Room 2.7.1** с генерацией кода через **KSP** (Kotlin Symbol Processing). База данных — одна: `AppDatabase` (версия 3, схема экспортируется в `/schemas`).
+Локальное хранилище реализовано на **Room 2.7.1** с генерацией кода через **KSP** (Kotlin Symbol Processing). База данных — одна: `AppDatabase` (версия 5, схема экспортируется в `/schemas`).
 
 ## Миграции
 
 | Версия | Изменение |
 |---|---|
-| 1 → 2 | `ALTER TABLE user_profile ADD COLUMN pressureUnit TEXT NOT NULL DEFAULT 'MMHG'` |
-| 2 → 3 | `ALTER TABLE user_profile ADD COLUMN isDarkTheme INTEGER NOT NULL DEFAULT 1` |
+| 1 → 2 | `user_profile.pressureUnit TEXT NOT NULL DEFAULT 'MMHG'` |
+| 2 → 3 | `user_profile.isDarkTheme INTEGER NOT NULL DEFAULT 1` |
+| 3 → 4 | новая таблица `weather_history` (timestamp PK, давление, температура, влажность) |
+| 4 → 5 | расширение `user_profile` (возраст, чувствительность, типы уведомлений, координаты), типизация `notification_log` (eventType, severity) |
 
 ## Таблицы
 
@@ -21,15 +23,24 @@
 |---|---|---|
 | id | INTEGER (PK) | Всегда 1 |
 | name | TEXT | Имя пользователя |
+| age | INTEGER (nullable) | Возраст 18–90 (опционально) |
+| sensitivity | TEXT | `LIGHT` / `MODERATE` (default) / `STRONG` — множитель чувствительности 1.0/1.3/1.6 |
 | hasHypertension | INTEGER (Boolean) | Гипертония |
 | hasMigraines | INTEGER (Boolean) | Мигрени |
 | hasJointPain | INTEGER (Boolean) | Боли в суставах |
 | hasRespiratoryIssues | INTEGER (Boolean) | Проблемы с дыханием |
-| notificationsEnabled | INTEGER (Boolean) | Уведомления включены |
-| notificationThreshold | INTEGER | Порог индекса (0–100) для уведомлений |
+| notificationsEnabled | INTEGER (Boolean) | Главный тумблер уведомлений |
+| notificationThreshold | INTEGER | Порог индекса (0–100) для общего уведомления |
+| notifyPressureJump | INTEGER (Boolean, default 1) | Уведомлять о скачках давления |
+| notifyGeomagneticStorm | INTEGER (Boolean, default 1) | Уведомлять о магнитных бурях |
+| notifyFrost | INTEGER (Boolean, default 1) | Уведомлять о морозе |
+| notifyHeat | INTEGER (Boolean, default 1) | Уведомлять о жаре |
 | onboardingCompleted | INTEGER (Boolean) | Онбординг пройден |
-| pressureUnit | TEXT | Единица давления: `HPA` или `MMHG` (default: MMHG) |
-| isDarkTheme | INTEGER (Boolean) | Тёмная тема включена (default: 1) |
+| pressureUnit | TEXT | `HPA` или `MMHG` (default: MMHG) |
+| isDarkTheme | INTEGER (Boolean, default 1) | Тёмная тема включена |
+| cityName | TEXT (nullable) | Город пользователя (fallback, если нет GPS) |
+| latitude | REAL (nullable) | Широта (заполняется при «Определить автоматически») |
+| longitude | REAL (nullable) | Долгота |
 
 ### weather_cache
 
@@ -47,6 +58,19 @@
 | windSpeedMs | REAL | Скорость ветра, м/с |
 | weatherDescription | TEXT | Текстовое описание |
 | weatherIcon | TEXT | Код иконки OWM |
+
+### weather_history
+
+История замеров погоды для расчёта реальных дельт ΔP_6h и ΔT_24h.
+
+| Столбец | Тип | Описание |
+|---|---|---|
+| timestamp | INTEGER (PK) | Unix-время замера |
+| pressureHpa | REAL | Давление, гПа |
+| temperatureCelsius | REAL | Температура, °C |
+| humidity | INTEGER | Влажность, % |
+
+Записи старше 7 дней удаляются при каждом обновлении.
 
 ### diary_entry
 
@@ -75,23 +99,28 @@
 
 ### notification_log
 
-Лог отправленных уведомлений (для предотвращения дубликатов).
+Лог отправленных уведомлений (для дубликатов и аналитики).
 
 | Столбец | Тип | Описание |
 |---|---|---|
 | id | INTEGER (PK, autoGenerate) | |
 | timestamp | INTEGER | Время отправки |
+| title | TEXT | Заголовок уведомления |
+| body | TEXT | Текст уведомления |
 | wellbeingIndex | INTEGER | Индекс при отправке |
+| eventType | TEXT (default 'GENERAL') | `PRESSURE_DROP` / `PRESSURE_RISE` / `GEOMAGNETIC_STORM` / `FROST` / `HEAT` / `GENERAL` |
+| severity | TEXT (default 'INFO') | `INFO` (канал `wellbeing_info`) или `URGENT` (`wellbeing_urgent`, IMPORTANCE_HIGH) |
 
 ## Доступ к данным (DAO)
 
 | DAO | Основные операции |
 |---|---|
-| UserProfileDao | upsert профиля, observe() как Flow |
+| UserProfileDao | upsert, observe(), deleteAll() |
 | WeatherCacheDao | вставка, getLatest(), deleteOlderThan() |
+| WeatherHistoryDao | insert, getSince(from), deleteOlderThan |
 | DiaryEntryDao | insert, delete, observeAll(), observeRange() |
 | KpCacheDao | вставка, getLatest() |
-| NotificationLogDao | insert, getLastSent() |
+| NotificationLogDao | insert, observeRecent(), deleteOlderThan |
 
 ## Стратегия offline-first
 

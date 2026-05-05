@@ -27,6 +27,14 @@ class FakeWeatherRepository : WeatherRepository {
         }
     }
 
+    override suspend fun getHistoricalTemperature(hoursBack: Int): List<Pair<Long, Float>> {
+        val now = System.currentTimeMillis()
+        return List(hoursBack) { i ->
+            val ts = now - (hoursBack - i) * 3600_000L
+            ts to (18f + (Math.random() * 6 - 3).toFloat())
+        }
+    }
+
     override suspend fun getForecast(lat: Double, lon: Double): List<ForecastDay> {
         val now = System.currentTimeMillis()
         val dayMs = 24 * 3600_000L

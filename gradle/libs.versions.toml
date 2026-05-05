@@ -23,6 +23,7 @@ vico = "2.1.2"
 mockk = "1.14.2"
 turbine = "1.2.0"
 datastorePreferences = "1.1.4"
+playServicesLocation = "21.3.0"
 
 [libraries]
 # Core
@@ -73,6 +74,9 @@ kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 
 # Vico charts
 vico-compose-m3 = { group = "com.patrykandpatrick.vico", name = "compose-m3", version.ref = "vico" }
+
+# Location
+play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 
 # Testing
 junit = { group = "junit", name = "junit", version.ref = "junit" }

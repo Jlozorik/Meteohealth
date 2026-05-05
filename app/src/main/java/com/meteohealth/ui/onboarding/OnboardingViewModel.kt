@@ -2,6 +2,7 @@ package com.meteohealth.ui.onboarding
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.meteohealth.domain.model.Sensitivity
 import com.meteohealth.domain.model.UserProfile
 import com.meteohealth.domain.repository.UserProfileRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,6 +13,8 @@ import kotlinx.coroutines.launch
 
 data class OnboardingState(
     val name: String = "",
+    val age: Int? = null,
+    val sensitivity: Sensitivity = Sensitivity.MODERATE,
     val hasHypertension: Boolean = false,
     val hasMigraines: Boolean = false,
     val hasJointPain: Boolean = false,
@@ -26,6 +29,8 @@ class OnboardingViewModel(
     val state: StateFlow<OnboardingState> = _state.asStateFlow()
 
     fun onNameChange(value: String) = _state.update { it.copy(name = value) }
+    fun onAgeChange(value: Int?) = _state.update { it.copy(age = value) }
+    fun onSensitivityChange(value: Sensitivity) = _state.update { it.copy(sensitivity = value) }
     fun onHypertensionToggle() = _state.update { it.copy(hasHypertension = !it.hasHypertension) }
     fun onMigrainesToggle() = _state.update { it.copy(hasMigraines = !it.hasMigraines) }
     fun onJointPainToggle() = _state.update { it.copy(hasJointPain = !it.hasJointPain) }
@@ -37,6 +42,8 @@ class OnboardingViewModel(
             userProfileRepository.save(
                 UserProfile(
                     name = s.name.trim(),
+                    age = s.age,
+                    sensitivity = s.sensitivity,
                     hasHypertension = s.hasHypertension,
                     hasMigraines = s.hasMigraines,
                     hasJointPain = s.hasJointPain,

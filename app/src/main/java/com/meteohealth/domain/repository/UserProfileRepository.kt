@@ -6,4 +6,5 @@ import kotlinx.coroutines.flow.Flow
 interface UserProfileRepository {
     fun observe(): Flow<UserProfile>
     suspend fun save(profile: UserProfile)
+    suspend fun reset()
 }

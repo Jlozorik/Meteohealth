@@ -34,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.meteohealth.domain.model.Recommendation
+import com.meteohealth.ui.components.DisclaimerBanner
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -75,6 +76,7 @@ fun RecommendationsScreen(viewModel: RecommendationsViewModel = koinViewModel())
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    item { DisclaimerBanner() }
                     items(uiState.recommendations, key = { it.id }) { rec ->
                         RecommendationCard(rec)
                     }
@@ -118,6 +120,13 @@ private fun RecommendationCard(rec: Recommendation) {
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                rec.source?.let { source ->
+                    Text(
+                        text = "Источник: $source",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                    )
+                }
             }
         }
     }

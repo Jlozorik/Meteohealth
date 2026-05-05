@@ -101,6 +101,9 @@ dependencies {
     // Vico charts
     implementation(libs.vico.compose.m3)
 
+    // Location
+    implementation(libs.play.services.location)
+
     // Tests
     testImplementation(libs.junit)
     testImplementation(libs.mockk)

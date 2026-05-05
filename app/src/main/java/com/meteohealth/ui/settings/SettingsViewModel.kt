@@ -11,6 +11,7 @@ import androidx.work.WorkManager
 import com.meteohealth.domain.model.PressureUnit
 import com.meteohealth.domain.model.UserProfile
 import com.meteohealth.domain.repository.DiaryRepository
+import com.meteohealth.domain.repository.LocationRepository
 import com.meteohealth.domain.repository.UserProfileRepository
 import com.meteohealth.worker.WeatherSyncWorker
 import kotlinx.coroutines.flow.SharingStarted
@@ -22,6 +23,7 @@ import java.util.concurrent.TimeUnit
 class SettingsViewModel(
     private val userProfileRepository: UserProfileRepository,
     private val diaryRepository: DiaryRepository,
+    private val locationRepository: LocationRepository,
     private val context: Context
 ) : ViewModel() {
 
@@ -60,6 +62,53 @@ class SettingsViewModel(
     fun setPressureUnit(unit: PressureUnit) {
         viewModelScope.launch {
             userProfileRepository.save(profile.value.copy(pressureUnit = unit))
+        }
+    }
+
+    fun setNotifyPressureJump(enabled: Boolean) {
+        viewModelScope.launch {
+            userProfileRepository.save(profile.value.copy(notifyPressureJump = enabled))
+        }
+    }
+
+    fun setNotifyGeomagneticStorm(enabled: Boolean) {
+        viewModelScope.launch {
+            userProfileRepository.save(profile.value.copy(notifyGeomagneticStorm = enabled))
+        }
+    }
+
+    fun setNotifyFrost(enabled: Boolean) {
+        viewModelScope.launch {
+            userProfileRepository.save(profile.value.copy(notifyFrost = enabled))
+        }
+    }
+
+    fun setNotifyHeat(enabled: Boolean) {
+        viewModelScope.launch {
+            userProfileRepository.save(profile.value.copy(notifyHeat = enabled))
+        }
+    }
+
+    fun setCityName(name: String) {
+        viewModelScope.launch {
+            userProfileRepository.save(profile.value.copy(cityName = name.takeIf { it.isNotBlank() }))
+        }
+    }
+
+    fun detectLocation(onResult: (Boolean) -> Unit = {}) {
+        viewModelScope.launch {
+            val location = locationRepository.getCurrentLocation()
+            if (location != null) {
+                userProfileRepository.save(
+                    profile.value.copy(
+                        latitude = location.latitude,
+                        longitude = location.longitude
+                    )
+                )
+                onResult(true)
+            } else {
+                onResult(false)
+            }
         }
     }
 

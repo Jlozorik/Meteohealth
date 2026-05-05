@@ -7,27 +7,27 @@
 ```
 com.meteohealth/
 ├── data/
-│   ├── local/       — Room: сущности, DAO, AppDatabase
+│   ├── local/       — Room: сущности, DAO, AppDatabase (v5)
 │   ├── remote/      — Retrofit: API, DTO, интерсепторы
-│   └── repository/  — реализации интерфейсов репозиториев
+│   └── repository/  — реализации интерфейсов репозиториев (включая LocationRepositoryImpl)
 ├── domain/
-│   ├── model/       — доменные модели (UserProfile, DiaryEntry, …)
-│   ├── repository/  — интерфейсы репозиториев
+│   ├── model/       — доменные модели (UserProfile, DiaryEntry, Sensitivity, …)
+│   ├── repository/  — интерфейсы репозиториев (включая LocationRepository)
 │   ├── WellbeingCalculator.kt
 │   └── TriggerAnalyzer.kt
 ├── ui/
-│   ├── theme/       — цвета, типографика, тема Material 3
-│   ├── navigation/  — NavGraph, BottomNavBar, NavRoutes
-│   ├── components/  — переиспользуемые компоненты
-│   ├── onboarding/
-│   ├── dashboard/
-│   ├── forecast/
-│   ├── diary/
-│   ├── recommendations/
-│   └── settings/
+│   ├── theme/       — цвета (включая SeverityGreen/Yellow/Red), типографика
+│   ├── navigation/  — NavGraph, BottomNavBar, NavRoutes (+ SOURCES, PRIVACY)
+│   ├── components/  — переиспользуемые компоненты (DisclaimerBanner, SeverityBadge, ConditionChip)
+│   ├── onboarding/  — анкета (имя, возраст, чувствительность, заболевания)
+│   ├── dashboard/   — главная (карточки погоды, Kp, самочувствия + светофор + иконки факторов)
+│   ├── forecast/    — прогноз 5 дней + график wellbeing-таймлайна
+│   ├── diary/       — записи + анализ триггеров
+│   ├── recommendations/  — карточки советов с дисклеймером и источниками
+│   └── settings/    — настройки + SourcesScreen + PrivacyScreen
 ├── di/              — Koin-модули
-├── worker/          — WeatherSyncWorker
-└── notification/    — NotificationHelper
+├── worker/          — WeatherSyncWorker (определяет тип события и канал уведомления)
+└── notification/    — NotificationHelper (два канала + шаблоны WeatherEvent)
 ```
 
 ## Слои и их ответственности
@@ -74,13 +74,26 @@ WorkManager инициализируется вручную с `KoinWorkerFactor
 
 ## Фоновая работа
 
-`WeatherSyncWorker` (WorkManager) запускается периодически раз в 3 часа. При неблагоприятных условиях (индекс < порогового значения из профиля) отправляет уведомление через `NotificationHelper`.
+`WeatherSyncWorker` (WorkManager) запускается периодически раз в 3 часа. На каждом запуске:
+
+1. Берёт координаты из профиля (`latitude`/`longitude`), при отсутствии — fallback Москва (55.75, 37.62).
+2. Обновляет погоду и Kp.
+3. Считает реальные ΔP_6h и ΔT_24h по таблице `weather_history`.
+4. Вычисляет индекс через `WellbeingCalculator`.
+5. Определяет тип события (`PRESSURE_DROP/RISE`, `GEOMAGNETIC_STORM`, `FROST`, `HEAT`, `GENERAL`) по пороговым значениям.
+6. Уважает per-event тумблеры из профиля (`notifyPressureJump`, `notifyGeomagneticStorm`, `notifyFrost`, `notifyHeat`).
+7. Отправляет уведомление через нужный канал (`wellbeing_info` IMPORTANCE_DEFAULT для общих сообщений, `wellbeing_urgent` IMPORTANCE_HIGH с вибрацией для бурь и экстремальной температуры).
+8. Логирует отправку в `notification_log` с типом события и уровнем критичности.
+
+## Геолокация
+
+Реализация — `LocationRepositoryImpl` через `FusedLocationProviderClient` (`play-services-location`). Используется `PRIORITY_BALANCED_POWER_ACCURACY`. Запрашивается только `ACCESS_FINE_LOCATION` и `ACCESS_COARSE_LOCATION` (без `BACKGROUND_LOCATION` — фоновое отслеживание не нужно). Координаты сохраняются в профиль; при отказе или отсутствии разрешения остаётся fallback Москвы.
 
 ## Персонализация и ML
 
 Приложение реализует два уровня персонализации:
 
-1. **Статический** — `personalPenalty()` в `WellbeingCalculator` добавляет штраф к индексу в зависимости от хронических состояний из профиля (гипертония, мигрень, суставы, дыхание).
+1. **Статический** — `personalPenalty()` в `WellbeingCalculator` добавляет штраф к индексу в зависимости от хронических состояний из профиля (гипертония, мигрень, суставы, дыхание). Итоговый штраф умножается на коэффициент чувствительности `Sensitivity` из онбординга: `LIGHT`×1.0, `MODERATE`×1.3, `STRONG`×1.6.
 
 2. **Адаптивный (ML)** — `WellbeingPredictor` обучается на записях дневника методом наименьших квадратов (МНК / OLS):
    - Признаки: атмосферное давление (гПа), температура (°C), Kp-индекс.

@@ -1,7 +1,9 @@
 package com.meteohealth.data.repository
 
 import com.meteohealth.data.local.dao.WeatherCacheDao
+import com.meteohealth.data.local.dao.WeatherHistoryDao
 import com.meteohealth.data.local.entity.WeatherCacheEntity
+import com.meteohealth.data.local.entity.WeatherHistoryEntity
 import com.meteohealth.data.remote.api.WeatherApi
 import com.meteohealth.domain.WellbeingCalculator
 import com.meteohealth.domain.model.ForecastDay
@@ -16,7 +18,8 @@ import java.util.TimeZone
 
 class WeatherRepositoryImpl(
     private val api: WeatherApi,
-    private val dao: WeatherCacheDao
+    private val dao: WeatherCacheDao,
+    private val historyDao: WeatherHistoryDao
 ) : WeatherRepository {
 
     override fun observeCurrentWeather(): Flow<WeatherSnapshot?> =
@@ -25,9 +28,10 @@ class WeatherRepositoryImpl(
     override suspend fun refreshWeather(lat: Double, lon: Double) {
         try {
             val dto = api.getCurrentWeather(lat, lon)
+            val ts = dto.timestamp * 1000L
             dao.upsert(
                 WeatherCacheEntity(
-                    timestamp = dto.timestamp * 1000L,
+                    timestamp = ts,
                     temperatureCelsius = dto.main.tempKelvin,
                     pressureHpa = dto.main.pressureHpa,
                     humidity = dto.main.humidity,
@@ -37,14 +41,29 @@ class WeatherRepositoryImpl(
                     cityName = dto.cityName
                 )
             )
+            historyDao.insert(
+                WeatherHistoryEntity(
+                    timestamp = ts,
+                    pressureHpa = dto.main.pressureHpa,
+                    temperatureCelsius = dto.main.tempKelvin,
+                    humidity = dto.main.humidity
+                )
+            )
+            // Чистим историю старше 7 дней — для анализа триггеров и ΔP/ΔT этого достаточно.
+            historyDao.deleteOlderThan(System.currentTimeMillis() - 7L * 24 * 3600_000L)
         } catch (_: Exception) {
             // offline-first: ошибка сети — возвращаем кэш через Flow
         }
     }
 
     override suspend fun getHistoricalPressure(hoursBack: Int): List<Pair<Long, Float>> {
-        val cached = dao.get() ?: return emptyList()
-        return listOf(cached.timestamp to cached.pressureHpa)
+        val from = System.currentTimeMillis() - hoursBack * 3600_000L
+        return historyDao.getSince(from).map { it.timestamp to it.pressureHpa }
+    }
+
+    override suspend fun getHistoricalTemperature(hoursBack: Int): List<Pair<Long, Float>> {
+        val from = System.currentTimeMillis() - hoursBack * 3600_000L
+        return historyDao.getSince(from).map { it.timestamp to it.temperatureCelsius }
     }
 
     override suspend fun getForecast(lat: Double, lon: Double): List<ForecastDay> {

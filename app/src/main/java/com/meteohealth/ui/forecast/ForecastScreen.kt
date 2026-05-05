@@ -112,6 +112,14 @@ fun ForecastScreen(viewModel: ForecastViewModel = koinViewModel()) {
                     modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
+                    if (state.days.size >= 2) {
+                        item {
+                            WellbeingTimelineCard(
+                                days = state.days,
+                                personalIndices = state.personalIndices
+                            )
+                        }
+                    }
                     itemsIndexed(state.days) { _, day ->
                         var visible by remember { mutableStateOf(false) }
                         LaunchedEffect(Unit) { visible = true }
@@ -303,6 +311,108 @@ private fun ForecastDayCard(day: ForecastDay, personalIndex: Int? = null) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun WellbeingTimelineCard(
+    days: List<ForecastDay>,
+    personalIndices: Map<Long, Int>
+) {
+    val modelProducer = remember { CartesianChartModelProducer() }
+    val onSurfaceVariantColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val accentColor = WellbeingGood
+
+    val values = remember(days, personalIndices) {
+        days.map { (personalIndices[it.dateMillis] ?: it.wellbeingIndex).toDouble() }
+    }
+
+    LaunchedEffect(values) {
+        modelProducer.runTransaction {
+            lineSeries { series(values) }
+        }
+    }
+
+    val labelFormatter = remember(days) {
+        CartesianValueFormatter { _, value, _ ->
+            val idx = value.toInt().coerceIn(0, days.lastIndex)
+            SimpleDateFormat("dd.MM", Locale.getDefault()).format(Date(days[idx].dateMillis))
+        }
+    }
+
+    val markerLabel = rememberTextComponent(
+        color = MaterialTheme.colorScheme.onSurface,
+        textSize = 11.sp
+    )
+    val markerValueFormatter = remember {
+        DefaultCartesianMarker.ValueFormatter { _, targets ->
+            targets.filterIsInstance<LineCartesianLayerMarkerTarget>()
+                .flatMap { it.points }
+                .firstOrNull()
+                ?.let { "${it.entry.y.toInt()}/100" }
+                ?: ""
+        }
+    }
+    val marker = rememberDefaultCartesianMarker(
+        label = markerLabel,
+        valueFormatter = markerValueFormatter
+    )
+
+    val line = LineCartesianLayer.rememberLine(
+        fill = LineCartesianLayer.LineFill.single(fill(accentColor)),
+        stroke = LineCartesianLayer.LineStroke.continuous(thickness = 2.dp),
+        areaFill = LineCartesianLayer.AreaFill.single(
+            fill(
+                ShaderProvider.verticalGradient(
+                    arrayOf(accentColor.copy(alpha = 0.35f), Color.Transparent)
+                )
+            )
+        ),
+        pointConnector = PointConnector.cubic(curvature = 0.5f)
+    )
+
+    val axisLabel = rememberAxisLabelComponent(
+        color = onSurfaceVariantColor,
+        textSize = 10.sp
+    )
+    val bottomAxis = HorizontalAxis.rememberBottom(
+        label = axisLabel,
+        line = null,
+        tick = null,
+        guideline = null,
+        valueFormatter = labelFormatter,
+        itemPlacer = remember { HorizontalAxis.ItemPlacer.aligned() }
+    )
+    val chart = rememberCartesianChart(
+        rememberLineCartesianLayer(
+            lineProvider = LineCartesianLayer.LineProvider.series(line)
+        ),
+        bottomAxis = bottomAxis,
+        marker = marker
+    )
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                "Самочувствие на ${days.size} дней",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                "Индекс по дням (выше — лучше)",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            CartesianChartHost(
+                chart = chart,
+                modelProducer = modelProducer,
+                modifier = Modifier.fillMaxWidth().height(140.dp)
+            )
         }
     }
 }

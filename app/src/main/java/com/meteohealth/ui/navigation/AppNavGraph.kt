@@ -21,7 +21,9 @@ import com.meteohealth.ui.diary.TriggersScreen
 import com.meteohealth.ui.forecast.ForecastScreen
 import com.meteohealth.ui.onboarding.OnboardingScreen
 import com.meteohealth.ui.recommendations.RecommendationsScreen
+import com.meteohealth.ui.settings.PrivacyScreen
 import com.meteohealth.ui.settings.SettingsScreen
+import com.meteohealth.ui.settings.SourcesScreen
 import com.meteohealth.ui.splash.SplashScreen
 
 @Composable
@@ -39,6 +41,8 @@ fun AppNavGraph(
                 || currentRoute == NavRoutes.ONBOARDING
                 || currentRoute == NavRoutes.DIARY_ADD
                 || currentRoute == NavRoutes.TRIGGERS
+                || currentRoute == NavRoutes.SOURCES
+                || currentRoute == NavRoutes.PRIVACY
             if (!hideBar) {
                 BottomNavBar(navController = navController, currentRoute = currentRoute)
             }
@@ -91,7 +95,18 @@ fun AppNavGraph(
                 DiaryAddScreen(onBack = { navController.popBackStack() })
             }
             composable(NavRoutes.RECOMMENDATIONS) { RecommendationsScreen() }
-            composable(NavRoutes.SETTINGS) { SettingsScreen() }
+            composable(NavRoutes.SETTINGS) {
+                SettingsScreen(
+                    onOpenSources = { navController.navigate(NavRoutes.SOURCES) },
+                    onOpenPrivacy = { navController.navigate(NavRoutes.PRIVACY) }
+                )
+            }
+            composable(NavRoutes.SOURCES) {
+                SourcesScreen(onBack = { navController.popBackStack() })
+            }
+            composable(NavRoutes.PRIVACY) {
+                PrivacyScreen(onBack = { navController.popBackStack() })
+            }
         }
     }
 }

@@ -10,4 +10,6 @@ object NavRoutes {
     const val RECOMMENDATIONS = "recommendations"
     const val SETTINGS = "settings"
     const val TRIGGERS = "diary/triggers"
+    const val SOURCES = "settings/sources"
+    const val PRIVACY = "settings/privacy"
 }

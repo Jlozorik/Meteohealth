@@ -2,6 +2,8 @@ package com.meteohealth.data.repository
 
 import com.meteohealth.data.local.dao.UserProfileDao
 import com.meteohealth.data.local.entity.UserProfileEntity
+import com.meteohealth.domain.model.PressureUnit
+import com.meteohealth.domain.model.Sensitivity
 import com.meteohealth.domain.model.UserProfile
 import com.meteohealth.domain.repository.UserProfileRepository
 import kotlinx.coroutines.flow.Flow
@@ -18,32 +20,55 @@ class UserProfileRepositoryImpl(
         dao.upsert(profile.toEntity())
     }
 
+    override suspend fun reset() {
+        dao.deleteAll()
+    }
+
     private fun UserProfileEntity.toDomain() = UserProfile(
         id = id,
         name = name,
+        age = age,
+        sensitivity = runCatching { Sensitivity.valueOf(sensitivity) }
+            .getOrDefault(Sensitivity.MODERATE),
         hasHypertension = hasHypertension,
         hasMigraines = hasMigraines,
         hasJointPain = hasJointPain,
         hasRespiratoryIssues = hasRespiratoryIssues,
         notificationsEnabled = notificationsEnabled,
         notificationThreshold = notificationThreshold,
+        notifyPressureJump = notifyPressureJump,
+        notifyGeomagneticStorm = notifyGeomagneticStorm,
+        notifyFrost = notifyFrost,
+        notifyHeat = notifyHeat,
         onboardingCompleted = onboardingCompleted,
-        pressureUnit = runCatching { com.meteohealth.domain.model.PressureUnit.valueOf(pressureUnit) }
-            .getOrDefault(com.meteohealth.domain.model.PressureUnit.MMHG),
-        isDarkTheme = isDarkTheme
+        pressureUnit = runCatching { PressureUnit.valueOf(pressureUnit) }
+            .getOrDefault(PressureUnit.MMHG),
+        isDarkTheme = isDarkTheme,
+        cityName = cityName,
+        latitude = latitude,
+        longitude = longitude
     )
 
     private fun UserProfile.toEntity() = UserProfileEntity(
         id = id,
         name = name,
+        age = age,
+        sensitivity = sensitivity.name,
         hasHypertension = hasHypertension,
         hasMigraines = hasMigraines,
         hasJointPain = hasJointPain,
         hasRespiratoryIssues = hasRespiratoryIssues,
         notificationsEnabled = notificationsEnabled,
         notificationThreshold = notificationThreshold,
+        notifyPressureJump = notifyPressureJump,
+        notifyGeomagneticStorm = notifyGeomagneticStorm,
+        notifyFrost = notifyFrost,
+        notifyHeat = notifyHeat,
         onboardingCompleted = onboardingCompleted,
         pressureUnit = pressureUnit.name,
-        isDarkTheme = isDarkTheme
+        isDarkTheme = isDarkTheme,
+        cityName = cityName,
+        latitude = latitude,
+        longitude = longitude
     )
 }

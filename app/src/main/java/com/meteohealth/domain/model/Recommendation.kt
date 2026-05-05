@@ -5,5 +5,7 @@ data class Recommendation(
     val triggerCondition: String,
     val title: String,
     val text: String,
-    val targetGroups: List<String>
+    val targetGroups: List<String>,
+    val category: String? = null,
+    val source: String? = null
 )

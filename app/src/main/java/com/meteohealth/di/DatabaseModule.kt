@@ -11,11 +11,17 @@ val databaseModule = module {
             androidContext(),
             AppDatabase::class.java,
             "meteohealth.db"
-        ).addMigrations(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3).build()
+        ).addMigrations(
+            AppDatabase.MIGRATION_1_2,
+            AppDatabase.MIGRATION_2_3,
+            AppDatabase.MIGRATION_3_4,
+            AppDatabase.MIGRATION_4_5
+        ).build()
     }
     single { get<AppDatabase>().userProfileDao() }
     single { get<AppDatabase>().weatherCacheDao() }
     single { get<AppDatabase>().diaryEntryDao() }
     single { get<AppDatabase>().kpCacheDao() }
     single { get<AppDatabase>().notificationLogDao() }
+    single { get<AppDatabase>().weatherHistoryDao() }
 }

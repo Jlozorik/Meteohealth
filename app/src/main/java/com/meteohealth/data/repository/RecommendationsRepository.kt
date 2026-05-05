@@ -14,7 +14,9 @@ private data class RecommendationDto(
     val triggerCondition: String,
     val title: String,
     val text: String,
-    val targetGroups: List<String>
+    val targetGroups: List<String>,
+    val category: String? = null,
+    val source: String? = null
 )
 
 /** Читает советы из assets и фильтрует по активным триггерам и профилю пользователя. */
@@ -28,8 +30,17 @@ class RecommendationsRepository(private val context: Context) {
             val raw = context.assets.open("recommendations.json")
                 .bufferedReader().use { it.readText() }
             val dtos = json.decodeFromString<List<RecommendationDto>>(raw)
-            dtos.map { Recommendation(it.id, it.triggerCondition, it.title, it.text, it.targetGroups) }
-                .also { cachedAll = it }
+            dtos.map {
+                Recommendation(
+                    id = it.id,
+                    triggerCondition = it.triggerCondition,
+                    title = it.title,
+                    text = it.text,
+                    targetGroups = it.targetGroups,
+                    category = it.category,
+                    source = it.source
+                )
+            }.also { cachedAll = it }
         }
     }
 

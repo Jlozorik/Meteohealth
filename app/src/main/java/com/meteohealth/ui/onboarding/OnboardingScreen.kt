@@ -15,6 +15,10 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.runtime.Composable
@@ -22,6 +26,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.meteohealth.domain.model.Sensitivity
 import com.meteohealth.ui.components.ConditionChip
 import org.koin.androidx.compose.koinViewModel
 
@@ -56,6 +61,33 @@ fun OnboardingScreen(
             modifier = Modifier.fillMaxWidth(),
             singleLine = true
         )
+
+        Text(
+            "Возраст: ${state.age?.toString() ?: "—"} (необязательно)",
+            style = MaterialTheme.typography.titleSmall
+        )
+        Slider(
+            value = (state.age ?: 30).toFloat(),
+            onValueChange = { viewModel.onAgeChange(it.toInt()) },
+            valueRange = 18f..90f,
+            steps = 71
+        )
+
+        Text("Тип метеочувствительности", style = MaterialTheme.typography.titleSmall)
+        val sensitivities = listOf(
+            Sensitivity.LIGHT to "Лёгкая",
+            Sensitivity.MODERATE to "Средняя",
+            Sensitivity.STRONG to "Сильная"
+        )
+        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+            sensitivities.forEachIndexed { index, (value, label) ->
+                SegmentedButton(
+                    selected = state.sensitivity == value,
+                    onClick = { viewModel.onSensitivityChange(value) },
+                    shape = SegmentedButtonDefaults.itemShape(index = index, count = sensitivities.size)
+                ) { Text(label) }
+            }
+        }
 
         Text("Хронические состояния", style = MaterialTheme.typography.titleMedium)
         Text(

@@ -43,6 +43,11 @@ val WellbeingModerate    = Color(0xFFFFAB40)
 val WellbeingPoor        = Color(0xFFFF7043)
 val WellbeingDanger      = Color(0xFFFF6B6B)
 
+// Светофор «норма / внимание / опасно» (правка 2.1 Pravka2)
+val SeverityGreen        = Color(0xFF66D17A)
+val SeverityYellow       = Color(0xFFFFC857)
+val SeverityRed          = Color(0xFFFF5A5F)
+
 // Light palette
 val LightPrimary              = Color(0xFF1A5FAA)
 val LightOnPrimary            = Color(0xFFFFFFFF)
