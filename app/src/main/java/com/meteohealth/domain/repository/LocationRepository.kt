@@ -1,7 +1,15 @@
 package com.meteohealth.domain.repository
 
 interface LocationRepository {
-    suspend fun getCurrentLocation(): LatLon?
+    /** Текущая геопозиция устройства с резолвом названия города (при возможности). */
+    suspend fun getCurrentLocation(): GeoLocation?
 
-    data class LatLon(val latitude: Double, val longitude: Double)
+    /** Поиск города по строке (forward-geocoding). Возвращает до 5 кандидатов. */
+    suspend fun searchCity(query: String): List<GeoLocation>
+
+    data class GeoLocation(
+        val latitude: Double,
+        val longitude: Double,
+        val cityName: String?
+    )
 }

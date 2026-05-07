@@ -12,13 +12,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Bolt
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -112,6 +116,7 @@ fun ForecastScreen(viewModel: ForecastViewModel = koinViewModel()) {
                     modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
+                    item { KpSummaryCard(kpIndex = state.currentKp) }
                     if (state.days.size >= 2) {
                         item {
                             WellbeingTimelineCard(
@@ -311,6 +316,52 @@ private fun ForecastDayCard(day: ForecastDay, personalIndex: Int? = null) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun KpSummaryCard(kpIndex: Float?) {
+    val placeholderColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val (color, label) = when {
+        kpIndex == null -> placeholderColor to "Нет данных"
+        kpIndex < 3     -> MaterialTheme.colorScheme.primary to "Спокойно"
+        kpIndex < 5     -> WellbeingModerate to "Умеренно"
+        kpIndex < 7     -> WellbeingPoor to "Активно"
+        else            -> WellbeingDanger to "Буря"
+    }
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Icon(
+                    imageVector = Icons.Outlined.Bolt,
+                    contentDescription = null,
+                    tint = color,
+                    modifier = Modifier.size(26.dp)
+                )
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(
+                        "Геомагнитная активность сегодня",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(label, style = MaterialTheme.typography.titleMedium, color = color)
+                }
+            }
+            Text(
+                text = if (kpIndex != null) "Kp ${"%.1f".format(Locale.ROOT, kpIndex)}" else "Kp —",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = color
+            )
         }
     }
 }

@@ -11,6 +11,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 
 class FakeWeatherRepository : WeatherRepository {
 
+    // Стабильные базовые значения — индекс самочувствия не должен прыгать на refresh.
+    private val basePressureHpa = 1015f
+    private val baseTemperatureC = 18f
+    private val pressureGradientPerHour = 0.4f   // ΔP_6h ≈ +2.4 гПа
+    private val tempTotalDelta24h = 3f           // ΔT_24h = +3 °C
+
     private val _weather = MutableStateFlow<WeatherSnapshot?>(fakeSnapshot())
 
     override fun observeCurrentWeather(): Flow<WeatherSnapshot?> = _weather
@@ -23,15 +29,16 @@ class FakeWeatherRepository : WeatherRepository {
         val now = System.currentTimeMillis()
         return List(hoursBack) { i ->
             val ts = now - (hoursBack - i) * 3600_000L
-            ts to (1013f + (Math.random() * 4 - 2).toFloat())
+            ts to (basePressureHpa + i * pressureGradientPerHour)
         }
     }
 
     override suspend fun getHistoricalTemperature(hoursBack: Int): List<Pair<Long, Float>> {
         val now = System.currentTimeMillis()
+        val denom = hoursBack.coerceAtLeast(1).toFloat()
         return List(hoursBack) { i ->
             val ts = now - (hoursBack - i) * 3600_000L
-            ts to (18f + (Math.random() * 6 - 3).toFloat())
+            ts to (baseTemperatureC + (i / denom) * tempTotalDelta24h)
         }
     }
 
@@ -69,8 +76,8 @@ class FakeWeatherRepository : WeatherRepository {
 
     private fun fakeSnapshot() = WeatherSnapshot(
         timestamp = System.currentTimeMillis(),
-        temperatureCelsius = 18f,
-        pressureHpa = 1013f,
+        temperatureCelsius = baseTemperatureC + tempTotalDelta24h,
+        pressureHpa = basePressureHpa + pressureGradientPerHour * 6,
         humidity = 65,
         weatherDescription = "переменная облачность",
         weatherIcon = "02d",

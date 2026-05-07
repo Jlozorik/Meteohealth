@@ -15,14 +15,13 @@ import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -32,14 +31,14 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.input.ImeAction
 import androidx.core.content.ContextCompat
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,6 +46,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.meteohealth.domain.model.PressureUnit
+import com.meteohealth.ui.components.CityPickerSection
+import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -58,9 +59,11 @@ fun SettingsScreen(
 ) {
     val profile by viewModel.profile.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     var showClearDialog by remember { mutableStateOf(false) }
-    var cityField by remember(profile.cityName) { mutableStateOf(profile.cityName.orEmpty()) }
+    var showCityPicker by remember { mutableStateOf(false) }
     var locationStatus by remember { mutableStateOf<String?>(null) }
+    val sheetState = rememberModalBottomSheetState()
 
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -68,7 +71,7 @@ fun SettingsScreen(
         val granted = result.values.any { it }
         if (granted) {
             viewModel.detectLocation { ok ->
-                locationStatus = if (ok) "Координаты определены" else "Не удалось получить координаты"
+                locationStatus = if (ok) "Местоположение обновлено" else "Не удалось получить геопозицию"
             }
         } else {
             locationStatus = "Доступ к геолокации не выдан"
@@ -210,54 +213,33 @@ fun SettingsScreen(
             SectionHeader("Местоположение")
             Spacer(Modifier.height(12.dp))
 
-            OutlinedTextField(
-                value = cityField,
-                onValueChange = { cityField = it },
-                label = { Text("Город") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                modifier = Modifier.fillMaxWidth()
-            )
-            LaunchedEffect(cityField) { viewModel.setCityName(cityField) }
-
-            Spacer(Modifier.height(8.dp))
-
-            OutlinedButton(
-                onClick = {
-                    val fineGranted = ContextCompat.checkSelfPermission(
-                        context, Manifest.permission.ACCESS_FINE_LOCATION
-                    ) == PackageManager.PERMISSION_GRANTED
-                    val coarseGranted = ContextCompat.checkSelfPermission(
-                        context, Manifest.permission.ACCESS_COARSE_LOCATION
-                    ) == PackageManager.PERMISSION_GRANTED
-                    if (fineGranted || coarseGranted) {
-                        viewModel.detectLocation { ok ->
-                            locationStatus = if (ok) "Координаты определены" else "Не удалось получить координаты"
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = profile.cityName?.let { "Город: $it" }
+                            ?: "Город не задан — Москва (по умолчанию)",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium
+                    )
+                    val statusOrCoords = locationStatus
+                        ?: profile.latitude?.let { lat ->
+                            profile.longitude?.let { lon -> "%.3f, %.3f".format(lat, lon) }
                         }
-                    } else {
-                        locationPermissionLauncher.launch(
-                            arrayOf(
-                                Manifest.permission.ACCESS_FINE_LOCATION,
-                                Manifest.permission.ACCESS_COARSE_LOCATION
-                            )
+                    if (!statusOrCoords.isNullOrBlank()) {
+                        Text(
+                            statusOrCoords,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(14.dp)
-            ) {
-                Text("Определить автоматически", style = MaterialTheme.typography.bodyMedium)
+                }
+                TextButton(onClick = { showCityPicker = true }) {
+                    Text("Изменить")
+                }
             }
-
-            Spacer(Modifier.height(6.dp))
-            val coordsLine = profile.latitude?.let { lat ->
-                profile.longitude?.let { lon -> "Координаты: %.3f, %.3f".format(lat, lon) }
-            }
-            Text(
-                locationStatus ?: coordsLine ?: "Координаты не заданы — будет использоваться Москва",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
 
             Spacer(Modifier.height(8.dp))
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -326,6 +308,60 @@ fun SettingsScreen(
                 TextButton(onClick = { showClearDialog = false }) { Text("Отмена") }
             }
         )
+    }
+
+    if (showCityPicker) {
+        ModalBottomSheet(
+            onDismissRequest = { showCityPicker = false },
+            sheetState = sheetState
+        ) {
+            Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)) {
+                Text(
+                    "Изменить город",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(Modifier.height(12.dp))
+                CityPickerSection(
+                    selectedCity = profile.cityName,
+                    onCitySelected = { geo ->
+                        viewModel.selectCity(geo)
+                        locationStatus = geo.cityName?.let { "Выбран: $it" }
+                        scope.launch {
+                            sheetState.hide()
+                            showCityPicker = false
+                        }
+                    },
+                    onSearch = { viewModel.searchCity(it) },
+                    onDetectClick = {
+                        val fineGranted = ContextCompat.checkSelfPermission(
+                            context, Manifest.permission.ACCESS_FINE_LOCATION
+                        ) == PackageManager.PERMISSION_GRANTED
+                        val coarseGranted = ContextCompat.checkSelfPermission(
+                            context, Manifest.permission.ACCESS_COARSE_LOCATION
+                        ) == PackageManager.PERMISSION_GRANTED
+                        if (fineGranted || coarseGranted) {
+                            viewModel.detectLocation { ok ->
+                                locationStatus = if (ok) "Местоположение обновлено" else "Не удалось получить геопозицию"
+                                if (ok) scope.launch {
+                                    sheetState.hide()
+                                    showCityPicker = false
+                                }
+                            }
+                        } else {
+                            locationPermissionLauncher.launch(
+                                arrayOf(
+                                    Manifest.permission.ACCESS_FINE_LOCATION,
+                                    Manifest.permission.ACCESS_COARSE_LOCATION
+                                )
+                            )
+                        }
+                    },
+                    statusLine = locationStatus
+                )
+                Spacer(Modifier.height(16.dp))
+            }
+        }
     }
 }
 

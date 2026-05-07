@@ -89,20 +89,30 @@ class SettingsViewModel(
         }
     }
 
-    fun setCityName(name: String) {
+    fun selectCity(geo: LocationRepository.GeoLocation) {
         viewModelScope.launch {
-            userProfileRepository.save(profile.value.copy(cityName = name.takeIf { it.isNotBlank() }))
+            userProfileRepository.save(
+                profile.value.copy(
+                    cityName = geo.cityName,
+                    latitude = geo.latitude,
+                    longitude = geo.longitude
+                )
+            )
         }
     }
 
+    suspend fun searchCity(query: String): List<LocationRepository.GeoLocation> =
+        locationRepository.searchCity(query)
+
     fun detectLocation(onResult: (Boolean) -> Unit = {}) {
         viewModelScope.launch {
-            val location = locationRepository.getCurrentLocation()
-            if (location != null) {
+            val geo = locationRepository.getCurrentLocation()
+            if (geo != null) {
                 userProfileRepository.save(
                     profile.value.copy(
-                        latitude = location.latitude,
-                        longitude = location.longitude
+                        cityName = geo.cityName ?: profile.value.cityName,
+                        latitude = geo.latitude,
+                        longitude = geo.longitude
                     )
                 )
                 onResult(true)

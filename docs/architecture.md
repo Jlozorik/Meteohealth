@@ -87,7 +87,11 @@ WorkManager инициализируется вручную с `KoinWorkerFactor
 
 ## Геолокация
 
-Реализация — `LocationRepositoryImpl` через `FusedLocationProviderClient` (`play-services-location`). Используется `PRIORITY_BALANCED_POWER_ACCURACY`. Запрашивается только `ACCESS_FINE_LOCATION` и `ACCESS_COARSE_LOCATION` (без `BACKGROUND_LOCATION` — фоновое отслеживание не нужно). Координаты сохраняются в профиль; при отказе или отсутствии разрешения остаётся fallback Москвы.
+Реализация — `LocationRepositoryImpl` через `FusedLocationProviderClient` (`play-services-location`) с `PRIORITY_BALANCED_POWER_ACCURACY` и системный `android.location.Geocoder`. Запрашивается только `ACCESS_FINE_LOCATION` и `ACCESS_COARSE_LOCATION` (без `BACKGROUND_LOCATION` — фоновое отслеживание не нужно).
+
+После получения координат выполняется обратное геокодирование (`Geocoder.getFromLocation`) — приоритет `address.locality` (например, «Реутов») над `subAdminArea` и `adminArea`, чтобы пригороды не схлопывались в столицу. Параллельно реализован прямой поиск (`searchCity` через `Geocoder.getFromLocationName`) для автодополнения в пикере города.
+
+Выбор города — обязательный шаг онбординга: кнопка «Начать» неактивна, пока не задан город или координаты. Изменить город позже можно в настройках через bottom-sheet «Изменить» с тем же пикером. Если выбор по каким-то причинам отсутствует, в `DashboardViewModel`/`WeatherSyncWorker` остаётся fallback на Москву (55.75, 37.62).
 
 ## Персонализация и ML
 

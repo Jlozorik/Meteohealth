@@ -126,12 +126,10 @@ fun DashboardScreen(viewModel: DashboardViewModel = koinViewModel()) {
                         tempDelta24h = state.tempDelta24h
                     )
                 }
-                state.kpIndex?.let { kp ->
-                    KpCard(
-                        kpIndex = kp,
-                        kpPenalty = state.breakdown?.kpPenalty ?: 0
-                    )
-                }
+                KpCard(
+                    kpIndex = state.kpIndex,
+                    kpPenalty = state.breakdown?.kpPenalty ?: 0
+                )
                 Spacer(Modifier.height(8.dp))
             }
         }
@@ -290,12 +288,14 @@ private fun WeatherCard(
 }
 
 @Composable
-private fun KpCard(kpIndex: Float, kpPenalty: Int) {
+private fun KpCard(kpIndex: Float?, kpPenalty: Int) {
+    val placeholderColor = MaterialTheme.colorScheme.onSurfaceVariant
     val (color, label) = when {
-        kpIndex < 3 -> MaterialTheme.colorScheme.primary to "Спокойно"
-        kpIndex < 5 -> WellbeingModerate to "Умеренно"
-        kpIndex < 7 -> WellbeingPoor to "Активно"
-        else        -> WellbeingDanger to "Буря"
+        kpIndex == null -> placeholderColor to "Нет данных"
+        kpIndex < 3     -> MaterialTheme.colorScheme.primary to "Спокойно"
+        kpIndex < 5     -> WellbeingModerate to "Умеренно"
+        kpIndex < 7     -> WellbeingPoor to "Активно"
+        else            -> WellbeingDanger to "Буря"
     }
     val animatedColor by animateColorAsState(color, tween(600), label = "kpColor")
 
@@ -325,7 +325,7 @@ private fun KpCard(kpIndex: Float, kpPenalty: Int) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(label, style = MaterialTheme.typography.titleMedium, color = animatedColor)
-                    if (kpPenalty > 0) {
+                    if (kpIndex != null && kpPenalty > 0) {
                         Text(
                             text = "вклад в индекс: −$kpPenalty балл${pluralBalls(kpPenalty)}",
                             style = MaterialTheme.typography.bodySmall,
@@ -335,7 +335,7 @@ private fun KpCard(kpIndex: Float, kpPenalty: Int) {
                 }
             }
             Text(
-                text = "Kp ${String.format(Locale.ROOT, "%.1f", kpIndex)}",
+                text = if (kpIndex != null) "Kp ${String.format(Locale.ROOT, "%.1f", kpIndex)}" else "Kp —",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = animatedColor

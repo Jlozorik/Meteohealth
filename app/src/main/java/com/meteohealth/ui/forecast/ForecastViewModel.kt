@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.meteohealth.domain.WellbeingPredictor
 import com.meteohealth.domain.model.ForecastDay
 import com.meteohealth.domain.repository.DiaryRepository
+import com.meteohealth.domain.repository.KpRepository
+import com.meteohealth.domain.repository.UserProfileRepository
 import com.meteohealth.domain.repository.WeatherRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,13 +18,16 @@ data class ForecastUiState(
     val days: List<ForecastDay> = emptyList(),
     val personalIndices: Map<Long, Int> = emptyMap(),
     val predictorTrained: Boolean = false,
+    val currentKp: Float? = null,
     val isLoading: Boolean = true,
     val error: Boolean = false
 )
 
 class ForecastViewModel(
     private val weatherRepository: WeatherRepository,
-    private val diaryRepository: DiaryRepository
+    private val diaryRepository: DiaryRepository,
+    private val kpRepository: KpRepository,
+    private val userProfileRepository: UserProfileRepository
 ) : ViewModel() {
 
     val uiState: StateFlow<ForecastUiState> get() = _uiState
@@ -39,7 +44,14 @@ class ForecastViewModel(
             val entries = diaryRepository.observeAll().first()
             predictor.train(entries)
 
-            val days = weatherRepository.getForecast(55.75, 37.62)
+            val profile = userProfileRepository.observe().first()
+            val lat = profile.latitude ?: 55.75
+            val lon = profile.longitude ?: 37.62
+
+            kpRepository.refreshKp()
+            val kp = kpRepository.observeLatestKp().first()
+
+            val days = weatherRepository.getForecast(lat, lon)
 
             val personalIndices = if (predictor.isTrained) {
                 days.associate { day ->
@@ -54,6 +66,7 @@ class ForecastViewModel(
                     days = days,
                     personalIndices = personalIndices,
                     predictorTrained = predictor.isTrained,
+                    currentKp = kp,
                     isLoading = false,
                     error = days.isEmpty()
                 )

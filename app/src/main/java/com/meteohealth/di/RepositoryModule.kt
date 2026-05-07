@@ -2,6 +2,7 @@ package com.meteohealth.di
 
 import com.meteohealth.BuildConfig
 import com.meteohealth.data.repository.DiaryRepositoryImpl
+import com.meteohealth.data.repository.FakeKpRepository
 import com.meteohealth.data.repository.FakeWeatherRepository
 import com.meteohealth.data.repository.KpRepositoryImpl
 import com.meteohealth.data.repository.LocationRepositoryImpl
@@ -24,7 +25,13 @@ val repositoryModule = module {
             WeatherRepositoryImpl(get(), get(), get())
         }
     }
-    single<KpRepository> { KpRepositoryImpl(get(), get()) }
+    single<KpRepository> {
+        if (BuildConfig.DEBUG && BuildConfig.OPEN_WEATHER_API_KEY.isEmpty()) {
+            FakeKpRepository()
+        } else {
+            KpRepositoryImpl(get(), get())
+        }
+    }
     single<UserProfileRepository> { UserProfileRepositoryImpl(get()) }
     single<DiaryRepository> { DiaryRepositoryImpl(get()) }
     single { RecommendationsRepository(androidContext()) }
