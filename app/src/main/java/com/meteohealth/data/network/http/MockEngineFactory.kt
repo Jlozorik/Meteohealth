@@ -1,26 +1,29 @@
 package com.meteohealth.data.network.http
 
-import io.ktor.client.engine.mock.MockEngine
-import io.ktor.client.engine.mock.respond
-import io.ktor.http.ContentType
-import io.ktor.http.HttpHeaders
-import io.ktor.http.HttpStatusCode
-import io.ktor.http.headersOf
+import okhttp3.Interceptor
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.Protocol
+import okhttp3.Response
+import okhttp3.ResponseBody.Companion.toResponseBody
 
-/** Используется когда DEBUG && apiKey.isEmpty(). Репозитории ничего не знают про demo. */
-fun buildMockEngine(): MockEngine = MockEngine { request ->
-    val url = request.url.toString()
-    val body = when {
-        url.contains("weather") && !url.contains("forecast") -> MOCK_CURRENT
-        url.contains("forecast") -> MOCK_FORECAST
-        url.contains("planetary_k_index") -> MOCK_KP
-        else -> "{}"
+/** OkHttp interceptor, используется когда DEBUG && apiKey.isEmpty(). */
+class MockInterceptor : Interceptor {
+    override fun intercept(chain: Interceptor.Chain): Response {
+        val url = chain.request().url.toString()
+        val body = when {
+            url.contains("forecast") -> MOCK_FORECAST
+            url.contains("weather") -> MOCK_CURRENT
+            url.contains("planetary_k_index") -> MOCK_KP
+            else -> "{}"
+        }
+        return Response.Builder()
+            .request(chain.request())
+            .protocol(Protocol.HTTP_1_1)
+            .code(200)
+            .message("OK")
+            .body(body.toResponseBody("application/json".toMediaType()))
+            .build()
     }
-    respond(
-        content = body,
-        status = HttpStatusCode.OK,
-        headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
-    )
 }
 
 private val MOCK_CURRENT = """

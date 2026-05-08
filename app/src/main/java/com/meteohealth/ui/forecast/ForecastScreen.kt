@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -147,7 +148,7 @@ private fun HourlyTable(hours: List<com.meteohealth.domain.model.WeatherHour>, p
 }
 
 @Composable
-private fun HeaderCell(text: String, weight: Float) =
+private fun RowScope.HeaderCell(text: String, weight: Float) =
     Text(
         text,
         style = MaterialTheme.typography.labelSmall,
@@ -156,7 +157,7 @@ private fun HeaderCell(text: String, weight: Float) =
     )
 
 @Composable
-private fun MonoCell(text: String, weight: Float) =
+private fun RowScope.MonoCell(text: String, weight: Float) =
     Text(
         text,
         style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),

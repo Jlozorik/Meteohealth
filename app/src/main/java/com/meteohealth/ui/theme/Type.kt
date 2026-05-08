@@ -12,9 +12,6 @@ import androidx.compose.ui.unit.sp
 private val Mono = FontFamily.Monospace
 private val Sans = FontFamily.SansSerif
 
-// Tabular numbers для всех числовых стилей
-private val tnum = androidx.compose.ui.text.font.FontFeature("tnum", 1)
-
 val Typography = Typography(
     displayLarge = TextStyle(
         fontFamily = Mono, fontWeight = FontWeight.Normal,

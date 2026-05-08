@@ -57,7 +57,7 @@ fun JournalScreen(onMenuClick: () -> Unit, vm: JournalViewModel = koinViewModel(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun JournalContent(state: JournalState, onMenuClick: () -> Unit, onIntent: (JournalIntent) -> Unit) {
-    val sheetState = rememberModalBottomSheetState(skipPartialExpansion = true)
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     Scaffold(
         topBar = {
