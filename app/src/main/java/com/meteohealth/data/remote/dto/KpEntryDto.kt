@@ -1,10 +1,11 @@
 package com.meteohealth.data.remote.dto
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-// NOAA SWPC отдаёт массив массивов: [timestamp_str, Kp_str]
+// NOAA SWPC отдаёт массив объектов: [{"time_tag": "...", "kp_index": 1.33}, ...]
 @Serializable
 data class KpEntryDto(
-    val timestamp: String,
-    val kpIndex: String
+    @SerialName("time_tag") val timeTag: String,
+    @SerialName("kp_index") val kpIndex: Double? = null
 )

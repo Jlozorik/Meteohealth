@@ -84,9 +84,9 @@ class WeatherSyncWorker(
     }
 
     private fun detectEvent(pressureDelta: Float, kp: Float, temperature: Float): WeatherEvent = when {
-        kp >= 6f -> WeatherEvent.GEOMAGNETIC_STORM
-        pressureDelta <= -6f -> WeatherEvent.PRESSURE_DROP
-        pressureDelta >= 6f -> WeatherEvent.PRESSURE_RISE
+        kp >= 5f -> WeatherEvent.GEOMAGNETIC_STORM   // G1 — начало бури, ощутимо для метеочувствительных
+        pressureDelta <= -4f -> WeatherEvent.PRESSURE_DROP
+        pressureDelta >= 4f -> WeatherEvent.PRESSURE_RISE
         temperature <= -15f -> WeatherEvent.FROST
         temperature >= 32f -> WeatherEvent.HEAT
         else -> WeatherEvent.GENERAL
