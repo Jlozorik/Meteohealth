@@ -6,7 +6,9 @@ data class OnboardingState(
     val age: String = "",
     val sensitivity: Int = 3,
     val conditions: Set<String> = emptySet(),
-    val city: String = "",
+    val city: String = "Москва",
+    val lat: Double = 55.7558,
+    val lon: Double = 37.6176,
 )
 
 sealed interface OnboardingIntent {

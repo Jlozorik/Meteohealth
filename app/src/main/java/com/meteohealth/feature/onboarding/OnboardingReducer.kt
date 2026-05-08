@@ -16,7 +16,10 @@ object OnboardingReducer {
                 }
                 state.copy(conditions = updated) to emptyList()
             }
-            is OnboardingIntent.CityChanged -> state.copy(city = intent.value) to emptyList()
+            is OnboardingIntent.CityChanged -> {
+                val coords = com.meteohealth.domain.model.CityLookup.resolve(intent.value)
+                state.copy(city = intent.value, lat = coords.lat, lon = coords.lon) to emptyList()
+            }
             is OnboardingIntent.Next -> {
                 if (state.step < TOTAL_STEPS - 1) {
                     state.copy(step = state.step + 1) to emptyList()

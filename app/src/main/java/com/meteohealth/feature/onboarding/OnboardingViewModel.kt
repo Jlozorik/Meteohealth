@@ -34,6 +34,8 @@ class OnboardingViewModel(
                             sensitivity = newState.sensitivity,
                             healthConditions = newState.conditions.toList(),
                             city = newState.city,
+                            lat = newState.lat,
+                            lon = newState.lon,
                         ))
                     }
                 }

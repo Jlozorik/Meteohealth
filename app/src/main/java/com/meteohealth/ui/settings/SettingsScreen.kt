@@ -153,8 +153,15 @@ private fun CitySection(state: SettingsState, onIntent: (SettingsIntent) -> Unit
                     singleLine = true,
                 )
                 if (state.cityQuery.length >= 2) {
-                    TextButton(onClick = { onIntent(SettingsIntent.CitySelected(state.cityQuery, 0.0, 0.0)) }) {
-                        Text(state.cityQuery)
+                    val suggestions = com.meteohealth.domain.model.CityLookup.suggestions(state.cityQuery)
+                    val targets = suggestions.ifEmpty {
+                        listOf(com.meteohealth.domain.model.CityLookup.resolve(state.cityQuery))
+                            .let { if (it.first().city.lowercase() == "москва" && !state.cityQuery.contains("москв", ignoreCase = true)) emptyList() else it }
+                    }
+                    targets.forEach { c ->
+                        TextButton(onClick = { onIntent(SettingsIntent.CitySelected(c.city, c.lat, c.lon)) }) {
+                            Text(c.city)
+                        }
                     }
                 }
             }

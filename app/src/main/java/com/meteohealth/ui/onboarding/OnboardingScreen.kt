@@ -90,7 +90,7 @@ private fun StepIndicator(current: Int, total: Int) {
 
 @Composable
 private fun Step0(state: OnboardingState, onIntent: (OnboardingIntent) -> Unit) {
-    Text("Кратко о себе.", style = MaterialTheme.typography.headlineMedium)
+    Text("Расскажи немного о себе", style = MaterialTheme.typography.headlineMedium)
     Spacer(Modifier.height(24.dp))
     OutlinedTextField(
         value = state.name,
@@ -112,7 +112,7 @@ private fun Step0(state: OnboardingState, onIntent: (OnboardingIntent) -> Unit) 
 
 @Composable
 private fun Step1(state: OnboardingState, onIntent: (OnboardingIntent) -> Unit) {
-    Text("Насколько чувствуешь.", style = MaterialTheme.typography.headlineMedium)
+    Text("Как ты реагируешь на погоду?", style = MaterialTheme.typography.headlineMedium)
     Spacer(Modifier.height(8.dp))
     Text(
         "Чувствительность: ${state.sensitivity}",
@@ -137,7 +137,7 @@ private fun Step1(state: OnboardingState, onIntent: (OnboardingIntent) -> Unit) 
 
 @Composable
 private fun Step2(state: OnboardingState, onIntent: (OnboardingIntent) -> Unit) {
-    Text("Хронические состояния.", style = MaterialTheme.typography.headlineMedium)
+    Text("Есть ли хронические заболевания?", style = MaterialTheme.typography.headlineMedium)
     Spacer(Modifier.height(16.dp))
     CONDITIONS.chunked(2).forEach { row ->
         Row(Modifier.fillMaxWidth()) {
@@ -155,13 +155,30 @@ private fun Step2(state: OnboardingState, onIntent: (OnboardingIntent) -> Unit) 
 
 @Composable
 private fun Step3(state: OnboardingState, onIntent: (OnboardingIntent) -> Unit) {
-    Text("Твой город.", style = MaterialTheme.typography.headlineMedium)
+    Text("В каком городе ты находишься?", style = MaterialTheme.typography.headlineMedium)
     Spacer(Modifier.height(24.dp))
     OutlinedTextField(
         value = state.city,
         onValueChange = { onIntent(OnboardingIntent.CityChanged(it)) },
         label = { Text("Город") },
+        placeholder = { Text("Москва") },
         modifier = Modifier.fillMaxWidth(),
         singleLine = true,
+        supportingText = { Text("${state.lat.format()}° с.ш., ${state.lon.format()}° в.д.") },
     )
+    val suggestions = com.meteohealth.domain.model.CityLookup.suggestions(state.city)
+    if (suggestions.isNotEmpty() && suggestions.first().city != state.city) {
+        Spacer(Modifier.height(4.dp))
+        suggestions.forEach { c ->
+            androidx.compose.material3.TextButton(
+                onClick = { onIntent(OnboardingIntent.CityChanged(c.city)) },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(c.city, style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.weight(1f))
+            }
+        }
+    }
 }
+
+private fun Double.format() = String.format("%.2f", this)
