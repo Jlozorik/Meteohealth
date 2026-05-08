@@ -1,21 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Icon v2: две горизонтальные полосы + акцентная точка справа (терракота).
+  Заменяет master-овский «капля + кардиограмма».
+-->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+
     <path
-        android:pathData="M54,21C54,21 33,45 33,63A21,21 0,0 0,75 63C75,45 54,21 54,21Z"
-        android:fillColor="#3B6FB6"/>
+        android:fillColor="#1F4E3D"
+        android:pathData="M22,44 L72,44 Q74,44 74,46 L74,50 Q74,52 72,52 L22,52 Q20,52 20,50 L20,46 Q20,44 22,44 Z" />
+
     <path
-        android:pathData="M42,54a4,8 0,1 0,8 0a4,8 0,1 0,-8 0z"
-        android:fillColor="#FFFFFF"
-        android:fillAlpha="0.35"/>
+        android:fillColor="#1F4E3D"
+        android:pathData="M22,58 L62,58 Q64,58 64,60 L64,64 Q64,66 62,66 L22,66 Q20,66 20,64 L20,60 Q20,58 22,58 Z" />
+
     <path
-        android:pathData="M24,65L42,65L47,59L53,72L60,60L65,65L84,65"
-        android:strokeLineJoin="round"
-        android:strokeWidth="1.5"
-        android:fillColor="#00000000"
-        android:strokeColor="#FFFFFF"
-        android:strokeLineCap="round"/>
+        android:fillColor="#B85C38"
+        android:pathData="M82,54 A6,6 0 1,1 81.99,54 Z" />
+
 </vector>
