@@ -2,122 +2,110 @@
 
 ## Общая структура
 
-Приложение построено по архитектурному паттерну **MVVM** (Model-View-ViewModel) с разделением на три слоя: `data`, `domain`, `ui`. Модуль единственный — весь код находится в модуле `app`.
+Приложение построено по паттерну **MVI** (Model–View–Intent) с разделением на слои `data`, `domain`, `ui`. Единственный модуль — `app`. Зависимости внедряются через **Koin 4.1.0**, организованный по фичам, а не по слоям.
 
 ```
 com.meteohealth/
 ├── data/
-│   ├── local/       — Room: сущности, DAO, AppDatabase (v5)
-│   ├── remote/      — Retrofit: API, DTO, интерсепторы
-│   └── repository/  — реализации интерфейсов репозиториев (включая LocationRepositoryImpl)
+│   ├── network/        — Ktor: DTO, сервисы, HttpClientFactory, MockEngineFactory
+│   ├── storage/        — Room v2: сущности, DAO, конвертеры, AppDatabase
+│   └── repository/     — реализации gateway-интерфейсов
 ├── domain/
-│   ├── model/       — доменные модели (UserProfile, DiaryEntry, Sensitivity, …)
-│   ├── repository/  — интерфейсы репозиториев (включая LocationRepository)
-│   ├── WellbeingCalculator.kt
-│   └── TriggerAnalyzer.kt
+│   ├── model/          — Profile, WeatherHour, KpSample, JournalEntry, RiskLevel, …
+│   ├── gateway/        — интерфейсы WeatherGateway, KpGateway, JournalGateway, …
+│   ├── wellbeing/      — Penalty, WellbeingPipeline, RiskClassifier
+│   ├── triggers/       — PearsonAnalyzer, TriggerResult
+│   └── usecase/        — ObserveHome, RefreshNow, AppendJournalEntry, …
 ├── ui/
-│   ├── theme/       — цвета (включая SeverityGreen/Yellow/Red), типографика
-│   ├── navigation/  — NavGraph, BottomNavBar, NavRoutes (+ SOURCES, PRIVACY)
-│   ├── components/  — переиспользуемые компоненты (DisclaimerBanner, SeverityBadge, ConditionChip)
-│   ├── onboarding/  — анкета (имя, возраст, чувствительность, заболевания)
-│   ├── dashboard/   — главная (карточки погоды, Kp, самочувствия + светофор + иконки факторов)
-│   ├── forecast/    — прогноз 5 дней + график wellbeing-таймлайна
-│   ├── diary/       — записи + анализ триггеров
-│   ├── recommendations/  — карточки советов с дисклеймером и источниками
-│   └── settings/    — настройки + SourcesScreen + PrivacyScreen
-├── di/              — Koin-модули
-├── worker/          — WeatherSyncWorker (определяет тип события и канал уведомления)
-└── notification/    — NotificationHelper (два канала + шаблоны WeatherEvent)
+│   ├── theme/          — Color, Type, Theme (только светлая)
+│   ├── components/     — MeteoDrawer, MeteoTopBar, DividedSection, EmptyState
+│   └── navigation/     — NavRoutes
+├── feature/
+│   ├── home/           — HomeContract, HomeReducer, HomeViewModel
+│   ├── forecast/       — ForecastContract, ForecastReducer, ForecastViewModel
+│   ├── journal/        — JournalContract, JournalReducer, JournalViewModel
+│   ├── settings/       — SettingsContract, SettingsReducer, SettingsViewModel
+│   └── onboarding/     — OnboardingContract, OnboardingReducer, OnboardingViewModel
+├── background/         — NotificationCenter, WeatherTickService, TickReceiver, BootReceiver
+└── di/                 — CoreModule, WeatherModule, KpModule, JournalModule,
+                          ProfileModule, HomeModule, ForecastModule,
+                          JournalUiModule, SettingsUiModule, OnboardingModule, AppModule
 ```
 
-## Слои и их ответственности
+## MVI
 
-### Слой данных (data)
+Каждая фича содержит три артефакта:
 
-Реализует два источника данных:
+- **Contract** — `State` (data class), `Intent` (sealed), `Effect` (sealed, одноразовые события).
+- **Reducer** — чистая функция `reduce(state, intent): Pair<State, List<Effect>>`, без Android-зависимостей, легко тестируется.
+- **ViewModel** — принимает intent, передаёт в reducer, применяет эффекты через `Channel<Effect>`.
 
-- **Room** — локальная БД (кэш погоды, дневник, профиль пользователя, лог уведомлений, кэш Kp-индекса).
-- **Retrofit** — сетевые API: OpenWeatherMap (текущая погода, прогноз) и NOAA SWPC (Kp-индекс).
+```
+Screen ──Intent──▶ ViewModel.send(intent)
+                       │
+                   Reducer.reduce(state, intent) → (newState, effects)
+                       │
+                   _state.value = newState
+                   effects → channel → LaunchedEffect в Screen
+```
 
-Репозитории реализуют принцип **offline-first**: при недоступности сети возвращают данные из Room, а не `Result.failure`.
+## Слой данных (data)
 
-В режиме разработки (BuildConfig.DEBUG + пустой API-ключ) подключается `FakeWeatherRepository` с синтетическими данными.
+- **Ktor Client** (OkHttp engine) вместо Retrofit: `HttpClientFactory.owm()` и `HttpClientFactory.noaa()`.
+- **MockEngine** при `BuildConfig.DEBUG && apiKey.isEmpty()` — позволяет запускать приложение без ключа.
+- **Room v2** (`meteohealth_v2.db`, версия 1) — нормализованная схема (профиль разбит на 5 таблиц, симптомы/метрики через FK с CASCADE).
+- Репозитории реализуют gateway-интерфейсы из `domain/gateway/` и соблюдают **offline-first**: Flow из Room эмитит кэш сразу, сеть обновляет фон.
 
-### Доменный слой (domain)
+## Доменный слой (domain)
 
-Содержит только Kotlin-классы без Android-зависимостей:
+Только чистый Kotlin, без Android-зависимостей:
 
-- **Доменные модели** — `DiaryEntry`, `UserProfile`, `WeatherSnapshot`, `ForecastDay`, `WellbeingLevel`, `Recommendation`, `PressureUnit`.
-- **Интерфейсы репозиториев** — `DiaryRepository`, `WeatherRepository`, `KpRepository`, `UserProfileRepository`.
-- **WellbeingCalculator** — вычисляет индекс самочувствия (0–100) по формуле с фиксированными весами.
-- **TriggerAnalyzer** — корреляция Пирсона между записями дневника и погодными факторами.
-- **WellbeingPredictor** — линейная регрессия (МНК), обучается на записях дневника, предсказывает персональный индекс по данным прогноза погоды.
+- **Gateway-интерфейсы** — контракт между доменом и данными.
+- **WellbeingPipeline** — fold по списку `Penalty`-стратегий; `companion object { fun default() }` возвращает стандартный набор из 5 стратегий.
+- **RiskClassifier** — `classify(score): RiskLevel` (CALM ≥ 80, WATCH ≥ 60, ALERT ≥ 40, HIGH < 40).
+- **PearsonAnalyzer** — корреляция Пирсона между уровнями самочувствия и погодными факторами.
+- **Use-cases** — оркестрация: `ObserveHomeUseCase` комбинирует 4 потока в `HomeFeed`.
 
-### Слой представления (ui)
+## Формула индекса (WellbeingPipeline)
 
-Весь UI построен на **Jetpack Compose + Material 3**. Каждый экран имеет собственный ViewModel. Навигация реализована через `NavHost` с нижней панелью `NavigationBar`.
-
-Состояние экранов передаётся через `StateFlow` → `collectAsState()` / `collectAsStateWithLifecycle()`.
-
-## Внедрение зависимостей
-
-Используется **Koin 4.1.0**. DI-модули:
-
-| Модуль | Содержимое |
-|---|---|
-| DatabaseModule | AppDatabase, все DAO |
-| NetworkModule | Retrofit, OkHttp, WeatherApi, KpApi |
-| RepositoryModule | реализации репозиториев |
-| ViewModelModule | все ViewModel |
-
-WorkManager инициализируется вручную с `KoinWorkerFactory` в `App.onCreate()`, поэтому стандартный `InitializationProvider` отключён через `tools:node="remove"` в манифесте.
+```
+score = 100
+  - PressurePenalty:  clamp(|ΔP_6h| × 4,       0, 30)
+  - KpPenalty:        clamp((Kp − 3) × 8,        0, 30)
+  - TempPenalty:      clamp((|ΔT_24h| − 5) × 2,  0, 20)
+  - HumidityPenalty:  clamp((humidity − 70) × 0.5, 0, 10)
+  - PersonalPenalty:  (sensitivity − 3) × 2 + conditions × 2,  coerceIn(0, 10)
+```
 
 ## Фоновая работа
 
-`WeatherSyncWorker` (WorkManager) запускается периодически раз в 3 часа. На каждом запуске:
+`WeatherTickService` (Foreground Service, `dataSync`) запускается `AlarmManager.setInexactRepeating` раз в час. `TickReceiver` планирует будильник при старте и пересоздаёт его `BootReceiver`-ом после перезагрузки.
 
-1. Берёт координаты из профиля (`latitude`/`longitude`), при отсутствии — fallback Москва (55.75, 37.62).
-2. Обновляет погоду и Kp.
-3. Считает реальные ΔP_6h и ΔT_24h по таблице `weather_history`.
-4. Вычисляет индекс через `WellbeingCalculator`.
-5. Определяет тип события (`PRESSURE_DROP/RISE`, `GEOMAGNETIC_STORM`, `FROST`, `HEAT`, `GENERAL`) по пороговым значениям.
-6. Уважает per-event тумблеры из профиля (`notifyPressureJump`, `notifyGeomagneticStorm`, `notifyFrost`, `notifyHeat`).
-7. Отправляет уведомление через нужный канал (`wellbeing_info` IMPORTANCE_DEFAULT для общих сообщений, `wellbeing_urgent` IMPORTANCE_HIGH с вибрацией для бурь и экстремальной температуры).
-8. Логирует отправку в `notification_log` с типом события и уровнем критичности.
+WorkManager полностью удалён; `InitializationProvider` убран из манифеста.
 
-## Геолокация
+## Внедрение зависимостей
 
-Реализация — `LocationRepositoryImpl` через `FusedLocationProviderClient` (`play-services-location`) с `PRIORITY_BALANCED_POWER_ACCURACY` и системный `android.location.Geocoder`. Запрашивается только `ACCESS_FINE_LOCATION` и `ACCESS_COARSE_LOCATION` (без `BACKGROUND_LOCATION` — фоновое отслеживание не нужно).
+Koin-модули сгруппированы по фичам:
 
-После получения координат выполняется обратное геокодирование (`Geocoder.getFromLocation`) — приоритет `address.locality` (например, «Реутов») над `subAdminArea` и `adminArea`, чтобы пригороды не схлопывались в столицу. Параллельно реализован прямой поиск (`searchCity` через `Geocoder.getFromLocationName`) для автодополнения в пикере города.
-
-Выбор города — обязательный шаг онбординга: кнопка «Начать» неактивна, пока не задан город или координаты. Изменить город позже можно в настройках через bottom-sheet «Изменить» с тем же пикером. Если выбор по каким-то причинам отсутствует, в `DashboardViewModel`/`WeatherSyncWorker` остаётся fallback на Москву (55.75, 37.62).
-
-## Персонализация и ML
-
-Приложение реализует два уровня персонализации:
-
-1. **Статический** — `personalPenalty()` в `WellbeingCalculator` добавляет штраф к индексу в зависимости от хронических состояний из профиля (гипертония, мигрень, суставы, дыхание). Итоговый штраф умножается на коэффициент чувствительности `Sensitivity` из онбординга: `LIGHT`×1.0, `MODERATE`×1.3, `STRONG`×1.6.
-
-2. **Адаптивный (ML)** — `WellbeingPredictor` обучается на записях дневника методом наименьших квадратов (МНК / OLS):
-   - Признаки: атмосферное давление (гПа), температура (°C), Kp-индекс.
-   - Целевая переменная: уровень самочувствия из дневника (TERRIBLE=10 … GREAT=90).
-   - Обучение: normal equations `w = (XᵀX)⁻¹ Xᵀy`, матричная арифметика на чистом Kotlin без внешних зависимостей.
-   - Требует ≥10 записей с полными метеоданными; при нехватке данных предиктор не активируется.
-   - Результат: персональный прогноз самочувствия на каждый из 5 дней на экране «Прогноз».
-
-3. **Аналитический** — `TriggerAnalyzer` вычисляет корреляцию Пирсона между записями дневника и тремя факторами (давление, температура, Kp), отображая личные триггеры на экране «Анализ».
+| Модуль | Содержимое |
+|---|---|
+| CoreModule | AppDatabase, DAO, owmClient, noaaClient (named qualifier), IO Dispatcher |
+| WeatherModule, KpModule | gateway-реализации + сервисы |
+| JournalModule, ProfileModule | gateway-реализации |
+| HomeModule | WellbeingPipeline, ObserveHomeUseCase, HomeViewModel |
+| ForecastModule, JournalUiModule, SettingsUiModule, OnboardingModule | ViewModel соответствующих фич |
+| AppModule | `allModules` — список всех выше |
 
 ## Поток данных
 
 ```
-UI (Compose Screen)
-    ↕ StateFlow / collectAsState
-ViewModel
-    ↕ suspend / Flow
-Repository (interface — domain)
-    ↕
-RepositoryImpl (data)
-    ↕                   ↕
-Room (local cache)    Retrofit (remote API)
+Compose Screen ──collect──▶ ViewModel.state: StateFlow<State>
+                                 │
+                           send(intent) → Reducer → (newState, effects)
+                                 │
+                       Use-case (Flow / suspend)
+                                 │
+                    GatewayImpl (data/repository)
+                        │               │
+                 Room (Flow)        Ktor (suspend)
 ```

@@ -2,126 +2,140 @@
 
 ## Технология
 
-Локальное хранилище реализовано на **Room 2.7.1** с генерацией кода через **KSP** (Kotlin Symbol Processing). База данных — одна: `AppDatabase` (версия 5, схема экспортируется в `/schemas`).
+Локальное хранилище — **Room 2.7.1** с кодогенерацией через **KSP**. Единственная база данных: `AppDatabase` (`meteohealth_v2.db`, версия 1, схема экспортируется в `/schemas`).
 
-## Миграции
+## Почему v2
 
-| Версия | Изменение |
-|---|---|
-| 1 → 2 | `user_profile.pressureUnit TEXT NOT NULL DEFAULT 'MMHG'` |
-| 2 → 3 | `user_profile.isDarkTheme INTEGER NOT NULL DEFAULT 1` |
-| 3 → 4 | новая таблица `weather_history` (timestamp PK, давление, температура, влажность) |
-| 4 → 5 | расширение `user_profile` (возраст, чувствительность, типы уведомлений, координаты), типизация `notification_log` (eventType, severity) |
+Предыдущая схема хранила профиль одной «fat»-строкой и держала кэш погоды/Kp в singleton-таблицах без внешних ключей. В v2:
+
+- Профиль разбит на 5 таблиц (профиль, здоровье, локация, настройки уведомлений, отображение) — чище миграции, нет широких обновлений.
+- Симптомы дневника вынесены в `journal_symptom` + связь `journal_entry_symptom` (FK, CASCADE DELETE) — нет сериализации списка в TEXT.
+- Метрики погоды на момент записи хранятся в `journal_entry_metric` (FK, CASCADE DELETE) — нет nullable-столбцов в основной таблице.
+- `weather_hour` использует `hourBucketEpoch` как PK — дедупликация по часу без autoincrement.
+- Нет миграций: база новая (`meteohealth_v2.db`), схема версии 1.
 
 ## Таблицы
 
-### user_profile
-
-Хранит единственную строку с профилем пользователя (PK = 1).
+### profile
 
 | Столбец | Тип | Описание |
 |---|---|---|
-| id | INTEGER (PK) | Всегда 1 |
+| id | INTEGER PK | Всегда 1 |
 | name | TEXT | Имя пользователя |
-| age | INTEGER (nullable) | Возраст 18–90 (опционально) |
-| sensitivity | TEXT | `LIGHT` / `MODERATE` (default) / `STRONG` — множитель чувствительности 1.0/1.3/1.6 |
-| hasHypertension | INTEGER (Boolean) | Гипертония |
-| hasMigraines | INTEGER (Boolean) | Мигрени |
-| hasJointPain | INTEGER (Boolean) | Боли в суставах |
-| hasRespiratoryIssues | INTEGER (Boolean) | Проблемы с дыханием |
-| notificationsEnabled | INTEGER (Boolean) | Главный тумблер уведомлений |
-| notificationThreshold | INTEGER | Порог индекса (0–100) для общего уведомления |
-| notifyPressureJump | INTEGER (Boolean, default 1) | Уведомлять о скачках давления |
-| notifyGeomagneticStorm | INTEGER (Boolean, default 1) | Уведомлять о магнитных бурях |
-| notifyFrost | INTEGER (Boolean, default 1) | Уведомлять о морозе |
-| notifyHeat | INTEGER (Boolean, default 1) | Уведомлять о жаре |
-| onboardingCompleted | INTEGER (Boolean) | Онбординг пройден |
-| pressureUnit | TEXT | `HPA` или `MMHG` (default: MMHG) |
-| isDarkTheme | INTEGER (Boolean, default 1) | Тёмная тема включена |
-| cityName | TEXT (nullable) | Город пользователя (fallback, если нет GPS) |
-| latitude | REAL (nullable) | Широта (заполняется при «Определить автоматически») |
-| longitude | REAL (nullable) | Долгота |
+| age | INTEGER? | Возраст (опционально) |
+| sensitivity | INTEGER | 1–5, множитель PersonalPenalty |
 
-### weather_cache
-
-Кэш текущей погоды от OpenWeatherMap.
+### profile_health_condition
 
 | Столбец | Тип | Описание |
 |---|---|---|
-| id | INTEGER (PK, autoGenerate) | |
+| profileId | INTEGER (FK → profile) | |
+| condition | TEXT | HYPERTENSION / MIGRAINE / JOINT_PAIN / ASTHMA / DIABETES / HEART_DISEASE |
+
+### profile_location
+
+| Столбец | Тип | Описание |
+|---|---|---|
+| profileId | INTEGER (FK → profile) | |
 | cityName | TEXT | Название города |
-| timestamp | INTEGER | Unix-время снимка |
-| temperatureCelsius | REAL | Температура, °C |
-| feelsLikeCelsius | REAL | Ощущаемая температура, °C |
-| pressureHpa | REAL | Давление, гПа |
-| humidity | INTEGER | Влажность, % |
-| windSpeedMs | REAL | Скорость ветра, м/с |
-| weatherDescription | TEXT | Текстовое описание |
-| weatherIcon | TEXT | Код иконки OWM |
+| latitude | REAL? | Широта |
+| longitude | REAL? | Долгота |
 
-### weather_history
-
-История замеров погоды для расчёта реальных дельт ΔP_6h и ΔT_24h.
+### profile_notification_pref
 
 | Столбец | Тип | Описание |
 |---|---|---|
-| timestamp | INTEGER (PK) | Unix-время замера |
+| profileId | INTEGER (FK → profile) | |
+| enabled | INTEGER (Boolean) | Главный тумблер |
+| thresholdScore | INTEGER | Порог индекса для уведомления |
+| types | TEXT | JSON-список типов уведомлений |
+
+### profile_display_pref
+
+| Столбец | Тип | Описание |
+|---|---|---|
+| profileId | INTEGER (FK → profile) | |
+| pressureUnit | TEXT | HPA / MMHG |
+
+### journal_entry
+
+| Столбец | Тип | Описание |
+|---|---|---|
+| id | INTEGER PK autoGenerate | |
+| createdAt | INTEGER (Instant → Long) | Время записи |
+| wellbeingScore | INTEGER | 0–100 |
+| notes | TEXT | Произвольные заметки |
+
+### journal_symptom
+
+| Столбец | Тип | Описание |
+|---|---|---|
+| id | INTEGER PK autoGenerate | |
+| name | TEXT (Unique) | HEADACHE / FATIGUE / PRESSURE / … |
+
+### journal_entry_symptom
+
+| Столбец | Тип | Описание |
+|---|---|---|
+| entryId | INTEGER (FK → journal_entry CASCADE) | |
+| symptomId | INTEGER (FK → journal_symptom CASCADE) | |
+
+### journal_entry_metric
+
+| Столбец | Тип | Описание |
+|---|---|---|
+| entryId | INTEGER (FK → journal_entry CASCADE) | |
+| key | TEXT | pressure_hpa / temp_c / kp / humidity |
+| value | REAL | Значение показателя |
+
+### weather_hour
+
+Кэш почасовых данных OWM.
+
+| Столбец | Тип | Описание |
+|---|---|---|
+| hourBucketEpoch | INTEGER PK | Unix-время, округлённое до часа |
+| tempC | REAL | Температура, °C |
 | pressureHpa | REAL | Давление, гПа |
-| temperatureCelsius | REAL | Температура, °C |
 | humidity | INTEGER | Влажность, % |
+| windMs | REAL | Скорость ветра, м/с |
+| description | TEXT | Описание OWM |
+| icon | TEXT | Код иконки OWM |
 
 Записи старше 7 дней удаляются при каждом обновлении.
 
-### diary_entry
-
-Записи дневника самочувствия.
+### kp_minute
 
 | Столбец | Тип | Описание |
 |---|---|---|
-| id | INTEGER (PK, autoGenerate) | |
-| timestamp | INTEGER | Unix-время записи |
-| wellbeingLevel | TEXT | Enum: GREAT/GOOD/FAIR/POOR/TERRIBLE |
-| symptoms | TEXT | Симптомы через запятую |
-| notes | TEXT | Произвольные заметки |
-| temperatureCelsius | REAL (nullable) | Температура на момент записи |
-| pressureHpa | REAL (nullable) | Давление на момент записи |
-| kpIndex | REAL (nullable) | Kp-индекс на момент записи |
+| epochSecond | INTEGER PK | Unix-время замера |
+| kp | REAL | Kp-индекс (0–9) |
 
-### kp_cache
-
-Кэш Kp-индекса геомагнитной активности (NOAA SWPC).
-
-| Столбец | Тип | Описание |
-|---|---|---|
-| id | INTEGER (PK, autoGenerate) | |
-| timestamp | INTEGER | Unix-время измерения |
-| kpIndex | REAL | Значение Kp (0–9) |
+Записи старше 24 часов удаляются при каждом обновлении.
 
 ### notification_log
 
-Лог отправленных уведомлений (для дубликатов и аналитики).
-
 | Столбец | Тип | Описание |
 |---|---|---|
-| id | INTEGER (PK, autoGenerate) | |
-| timestamp | INTEGER | Время отправки |
-| title | TEXT | Заголовок уведомления |
-| body | TEXT | Текст уведомления |
-| wellbeingIndex | INTEGER | Индекс при отправке |
-| eventType | TEXT (default 'GENERAL') | `PRESSURE_DROP` / `PRESSURE_RISE` / `GEOMAGNETIC_STORM` / `FROST` / `HEAT` / `GENERAL` |
-| severity | TEXT (default 'INFO') | `INFO` (канал `wellbeing_info`) или `URGENT` (`wellbeing_urgent`, IMPORTANCE_HIGH) |
+| id | INTEGER PK autoGenerate | |
+| sentAt | INTEGER (Instant → Long) | Время отправки |
+| riskLevel | TEXT | CALM / WATCH / ALERT / HIGH |
+| score | INTEGER | Индекс при отправке |
 
-## Доступ к данным (DAO)
+## DAO
 
 | DAO | Основные операции |
 |---|---|
-| UserProfileDao | upsert, observe(), deleteAll() |
-| WeatherCacheDao | вставка, getLatest(), deleteOlderThan() |
-| WeatherHistoryDao | insert, getSince(from), deleteOlderThan |
-| DiaryEntryDao | insert, delete, observeAll(), observeRange() |
-| KpCacheDao | вставка, getLatest() |
-| NotificationLogDao | insert, observeRecent(), deleteOlderThan |
+| ProfileDao | observe(), upsertProfile(), upsertLocation(), conditions, notifPrefs, displayPref |
+| JournalDao | observeAll(), upsertEntry(): Long, getSymptomsForEntry(), getMetricsForEntry() |
+| WeatherDao | upsertHour(), observeLatest(), getHistory(), deleteOlderThan() |
+| KpDao | upsertMinute(), observeLatest(), deleteOlderThan() |
+| NotificationLogDao | insert(), observeRecent() |
 
-## Стратегия offline-first
+## Конвертеры
 
-Репозитории всегда читают из Room. Сетевые запросы запускаются в фоне и обновляют кэш. При ошибке сети UI получает устаревшие данные из БД, а не сообщение об ошибке.
+`Converters.kt` — `@TypeConverter` для `Instant ↔ Long` (kotlinx-datetime).
+
+## Offline-first
+
+Gateway-реализации всегда эмитят данные из Room немедленно. Сетевые запросы обновляют базу в фоне. При ошибке сети UI продолжает видеть кэш.
