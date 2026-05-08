@@ -200,7 +200,7 @@ private fun strengthLabel(s: CorrelationStrength) = when (s) {
 @Composable
 private fun AddEntrySheet(state: JournalState, onIntent: (JournalIntent) -> Unit) {
     Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 16.dp)) {
-        Text("Отметить", style = MaterialTheme.typography.titleMedium)
+        Text("Расскажите о вашем самочувствии", style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(16.dp))
         Text("Самочувствие: ${state.draftLevel}", style = MaterialTheme.typography.bodyMedium)
         Slider(

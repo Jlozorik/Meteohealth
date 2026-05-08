@@ -40,7 +40,7 @@ fun MeteoDrawer(
     ModalDrawerSheet(modifier = modifier.fillMaxHeight()) {
         Column(Modifier.padding(vertical = 16.dp)) {
             Text(
-                text = "meteohealth",
+                text = "Метеоника",
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(horizontal = 28.dp, vertical = 12.dp),

@@ -25,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.meteohealth.domain.model.RiskLevel
 import com.meteohealth.feature.home.HomeIntent
@@ -102,6 +103,8 @@ private fun ScoreBlock(state: HomeState) {
         )
         Spacer(Modifier.height(8.dp))
         Text(
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
             text = state.verdict,
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onBackground,
@@ -133,7 +136,7 @@ private fun WeatherBlock(
 
 @Composable
 private fun KpBlock(kp: Double) {
-    DividedSection("МАГНИТЫ") {
+    DividedSection("ГЕОМАГНИТНАЯ АКТИВНОСТЬ") {
         Row(
             Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -146,7 +149,7 @@ private fun KpBlock(kp: Double) {
             val kpLabel = when {
                 kp >= 5 -> "шторм"
                 kp >= 4 -> "слабые возмущения"
-                else -> "шторма не ожидается"
+                else -> "шторм не ожидается"
             }
             Text(kpLabel, style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)

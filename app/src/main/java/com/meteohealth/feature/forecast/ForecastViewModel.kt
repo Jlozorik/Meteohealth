@@ -82,9 +82,9 @@ class ForecastViewModel(
     }
 
     private fun riskLabel(risk: RiskLevel) = when (risk) {
-        RiskLevel.CALM  -> "всё ровно"
-        RiskLevel.WATCH -> "стоит следить"
-        RiskLevel.ALERT -> "будь осторожен"
-        RiskLevel.HIGH  -> "тяжёлый день"
+        RiskLevel.CALM  -> "отсутствует"
+        RiskLevel.WATCH -> "небольшой"
+        RiskLevel.ALERT -> "средний"
+        RiskLevel.HIGH  -> "высокий"
     }
 }
