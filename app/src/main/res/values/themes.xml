@@ -1,13 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.Meteohealth" parent="android:Theme.Material.Light.NoActionBar" />
-
-    <style name="Theme.Meteohealth.Splash" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">#0A0E1A</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
-        <item name="windowSplashScreenIconBackgroundColor">#EAF2FB</item>
-        <item name="postSplashScreenTheme">@style/Theme.Meteohealth</item>
+    <style name="Theme.Meteohealth" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/background</item>
+        <item name="android:statusBarColor">@color/background</item>
+        <item name="android:navigationBarColor">@color/background</item>
     </style>
 
 </resources>

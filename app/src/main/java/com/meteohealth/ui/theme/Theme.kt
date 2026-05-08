@@ -1,11 +1,10 @@
 package com.meteohealth.ui.theme
 
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 
-private val DarkColorScheme = darkColorScheme(
+private val LightColorScheme = lightColorScheme(
     primary = Primary,
     onPrimary = OnPrimary,
     primaryContainer = PrimaryContainer,
@@ -33,45 +32,15 @@ private val DarkColorScheme = darkColorScheme(
     inverseSurface = InverseSurface,
     inverseOnSurface = InverseOnSurface,
     inversePrimary = InversePrimary,
-    scrim = Scrim
+    scrim = Scrim,
 )
 
-private val LightColorScheme = lightColorScheme(
-    primary = LightPrimary,
-    onPrimary = LightOnPrimary,
-    primaryContainer = LightPrimaryContainer,
-    onPrimaryContainer = LightOnPrimaryContainer,
-    secondary = LightSecondary,
-    onSecondary = LightOnSecondary,
-    secondaryContainer = LightSecondaryContainer,
-    onSecondaryContainer = LightOnSecondaryContainer,
-    tertiary = LightTertiary,
-    onTertiary = LightOnTertiary,
-    tertiaryContainer = LightTertiaryContainer,
-    onTertiaryContainer = LightOnTertiaryContainer,
-    error = LightError,
-    onError = LightOnError,
-    errorContainer = LightErrorContainer,
-    onErrorContainer = LightOnErrorContainer,
-    background = LightBackground,
-    onBackground = LightOnBackground,
-    surface = LightSurface,
-    onSurface = LightOnSurface,
-    surfaceVariant = LightSurfaceVariant,
-    onSurfaceVariant = LightOnSurfaceVariant,
-    outline = LightOutline,
-    outlineVariant = LightOutlineVariant,
-    inverseSurface = LightInverseSurface,
-    inverseOnSurface = LightInverseOnSurface,
-    inversePrimary = LightInversePrimary,
-    scrim = Scrim
-)
-
+/** Единственная тема — только светлая, тёплая. Тёмной нет. */
 @Composable
-fun MeteohealthTheme(darkTheme: Boolean = true, content: @Composable () -> Unit) {
+fun MeteoTheme(content: @Composable () -> Unit) {
     MaterialTheme(
-        colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme,
+        colorScheme = LightColorScheme,
         typography = Typography,
-        content = content
+        content = content,
     )
 }
