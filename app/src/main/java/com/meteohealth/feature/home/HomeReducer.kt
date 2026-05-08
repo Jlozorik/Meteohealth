@@ -11,6 +11,7 @@ object HomeReducer {
                 weather = intent.weather,
                 kp = intent.kp,
                 pressureDelta6h = intent.pressureDelta,
+                pressureUnit = intent.pressureUnit,
                 recommendations = intent.recommendations,
                 isLoading = false,
                 error = null,

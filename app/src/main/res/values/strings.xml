@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">meteohealth</string>
+    <string name="app_name">Метеоника</string>
 
     <!-- Навигация -->
     <string name="nav_today">СЕГОДНЯ</string>
@@ -8,64 +8,64 @@
     <string name="nav_settings">НАСТРОЙКИ</string>
 
     <!-- Индекс самочувствия -->
-    <string name="verdict_calm">Спокойно.</string>
-    <string name="verdict_watch">Ровно.</string>
-    <string name="verdict_alert">Следи за давлением.</string>
-    <string name="verdict_high">Береги голову.</string>
-    <string name="verdict_very_high">Тяжёлый день.</string>
+    <string name="verdict_calm">Всё в норме, можно не беспокоиться</string>
+    <string name="verdict_watch">Небольшие изменения, стоит немного поберечься</string>
+    <string name="verdict_alert">Погода давит — следи за давлением и не перегружайся</string>
+    <string name="verdict_high">Тяжёлый день, лучше отдохнуть и не напрягаться</string>
+    <string name="verdict_very_high">Очень неблагоприятно — постарайся провести день спокойно</string>
 
     <!-- Секции home -->
     <string name="section_weather">ПОГОДА</string>
-    <string name="section_magnets">МАГНИТЫ</string>
-    <string name="section_todo">ЧТО СДЕЛАТЬ</string>
+    <string name="section_magnets">ГЕОМАГНИТНАЯ АКТИВНОСТЬ</string>
+    <string name="section_todo">РЕКОМЕНДАЦИИ</string>
 
     <!-- Прогноз -->
     <string name="section_forecast_5d">ПРОГНОЗ НА 5 ДНЕЙ</string>
-    <string name="risk_calm">ровно</string>
-    <string name="risk_watch">следи</string>
-    <string name="risk_alert">осторожно</string>
-    <string name="risk_high">тяжело</string>
-    <string name="pressure_drop_fmt">Скачок %s гПа к вечеру.</string>
+    <string name="risk_calm">всё ровно</string>
+    <string name="risk_watch">стоит следить</string>
+    <string name="risk_alert">будь осторожен</string>
+    <string name="risk_high">тяжёлый день</string>
+    <string name="pressure_drop_fmt">Ожидается скачок давления на %s гПа к вечеру</string>
 
     <!-- Журнал -->
     <string name="tab_entries">ЗАПИСИ</string>
     <string name="tab_triggers">ТРИГГЕРЫ</string>
-    <string name="empty_journal">Дневник пуст.</string>
-    <string name="empty_recommendations">Без советов.</string>
-    <string name="triggers_not_enough">Мало записей. %d из 14.</string>
-    <string name="btn_mark">Отметить</string>
+    <string name="empty_journal">Пока нет ни одной записи. Нажми + чтобы добавить</string>
+    <string name="empty_recommendations">Сейчас нет дополнительных рекомендаций</string>
+    <string name="triggers_not_enough">Нужно ещё немного записей, чтобы найти закономерности — уже %d из 14</string>
+    <string name="btn_mark">Отметить самочувствие</string>
     <string name="btn_save">Сохранить</string>
-    <string name="btn_delete">Стереть</string>
+    <string name="btn_delete">Удалить</string>
 
     <!-- Настройки -->
     <string name="settings_notif">УВЕДОМЛЕНИЯ</string>
-    <string name="settings_units">ЕДИНИЦЫ</string>
+    <string name="settings_units">ЕДИНИЦЫ ИЗМЕРЕНИЯ</string>
     <string name="settings_city">ГОРОД</string>
-    <string name="settings_sources">ОТКУДА ДАННЫЕ</string>
-    <string name="settings_privacy">ПРИВАТНОСТЬ</string>
-    <string name="settings_data">ДАННЫЕ</string>
+    <string name="settings_sources">ИСТОЧНИКИ ДАННЫХ</string>
+    <string name="settings_privacy">КОНФИДЕНЦИАЛЬНОСТЬ</string>
+    <string name="settings_data">МОИ ДАННЫЕ</string>
     <string name="settings_about">О ПРИЛОЖЕНИИ</string>
-    <string name="btn_clear_all">Стереть всё</string>
-    <string name="clear_confirm_title">Стереть всё?</string>
-    <string name="clear_confirm_body">Все записи дневника будут удалены без возможности восстановления.</string>
+    <string name="btn_clear_all">Удалить все данные</string>
+    <string name="clear_confirm_title">Удалить все данные?</string>
+    <string name="clear_confirm_body">Все записи дневника будут удалены. Это действие нельзя отменить.</string>
 
     <!-- Источники -->
-    <string name="sources_text">Погода: OpenWeatherMap (api.openweathermap.org).\nГеомагнитная активность: NOAA SWPC (services.swpc.noaa.gov).</string>
+    <string name="sources_text">Данные о погоде предоставляются сервисом OpenWeatherMap (api.openweathermap.org).\nГеомагнитная активность — NOAA SWPC (services.swpc.noaa.gov).</string>
     <!-- Приватность -->
-    <string name="privacy_text">Все данные хранятся локально на устройстве. Сторонним сервисам передаются только координаты для получения погоды.</string>
+    <string name="privacy_text">Все твои данные хранятся только на этом устройстве и никуда не передаются. Для получения прогноза погоды приложение отправляет координаты города на серверы OpenWeatherMap — и только.</string>
 
     <!-- Онбординг -->
-    <string name="onboarding_step0">Кратко о себе.</string>
-    <string name="onboarding_step1">Насколько чувствуешь.</string>
-    <string name="onboarding_step2">Хронические состояния.</string>
-    <string name="onboarding_step3">Твой город.</string>
+    <string name="onboarding_step0">Расскажи немного о себе</string>
+    <string name="onboarding_step1">Как ты реагируешь на погоду?</string>
+    <string name="onboarding_step2">Есть ли хронические заболевания?</string>
+    <string name="onboarding_step3">В каком городе ты находишься?</string>
     <string name="btn_next">Далее</string>
     <string name="btn_back">Назад</string>
     <string name="btn_done">Готово</string>
 
     <!-- Общее -->
     <string name="cd_menu">Меню</string>
-    <string name="cd_refresh">Обновить</string>
-    <string name="no_data">Нет данных.</string>
-    <string name="error_generic">Что-то пошло не так.</string>
+    <string name="cd_refresh">Обновить данные</string>
+    <string name="no_data">Данные пока недоступны</string>
+    <string name="error_generic">Что-то пошло не так — попробуй обновить</string>
 </resources>

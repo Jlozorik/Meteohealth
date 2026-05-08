@@ -1,6 +1,7 @@
 package com.meteohealth.feature.home
 
 import com.meteohealth.domain.model.KpSample
+import com.meteohealth.domain.model.PressureUnit
 import com.meteohealth.domain.model.Recommendation
 import com.meteohealth.domain.model.RiskLevel
 import com.meteohealth.domain.model.WeatherHour
@@ -12,6 +13,7 @@ data class HomeState(
     val weather: WeatherHour? = null,
     val kp: KpSample? = null,
     val pressureDelta6h: Double = 0.0,
+    val pressureUnit: PressureUnit = PressureUnit.HPA,
     val recommendations: List<Recommendation> = emptyList(),
     val isLoading: Boolean = true,
     val error: String? = null,
@@ -26,6 +28,7 @@ sealed interface HomeIntent {
         val weather: WeatherHour?,
         val kp: KpSample?,
         val pressureDelta: Double,
+        val pressureUnit: PressureUnit,
         val recommendations: List<Recommendation>,
     ) : HomeIntent
     data class ErrorOccurred(val message: String) : HomeIntent

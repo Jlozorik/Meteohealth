@@ -138,7 +138,7 @@ private fun EntriesTab(state: JournalState, onIntent: (JournalIntent) -> Unit) {
                     }
                     if (entry.symptoms.isNotEmpty()) {
                         Text(
-                            text = entry.symptoms.joinToString(", ") { it.name.lowercase().replace('_', ' ') },
+                            text = entry.symptoms.joinToString(", ") { it.label() },
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -218,7 +218,7 @@ private fun AddEntrySheet(state: JournalState, onIntent: (JournalIntent) -> Unit
                 FilterChip(
                     selected = s in state.draftSymptoms,
                     onClick = { onIntent(JournalIntent.DraftSymptomToggled(s)) },
-                    label = { Text(s.name.lowercase(), style = MaterialTheme.typography.labelSmall) },
+                    label = { Text(s.label(), style = MaterialTheme.typography.labelSmall) },
                     modifier = Modifier.padding(end = 4.dp),
                 )
             }

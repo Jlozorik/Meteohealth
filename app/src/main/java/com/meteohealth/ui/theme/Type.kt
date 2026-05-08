@@ -4,25 +4,21 @@ import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 
-// Display + числа: моноширинный (JetBrains Mono — добавить TTF в res/font/ при полной сборке).
-// Body: системный sans-serif.
-private val Mono = FontFamily.Monospace
-private val Sans = FontFamily.SansSerif
+private val Sans = FontFamily.Default
 
 val Typography = Typography(
     displayLarge = TextStyle(
-        fontFamily = Mono, fontWeight = FontWeight.Normal,
+        fontFamily = Sans, fontWeight = FontWeight.Normal,
         fontSize = 57.sp, lineHeight = 64.sp, letterSpacing = (-0.25).sp,
     ),
     displayMedium = TextStyle(
-        fontFamily = Mono, fontWeight = FontWeight.Normal,
+        fontFamily = Sans, fontWeight = FontWeight.Normal,
         fontSize = 45.sp, lineHeight = 52.sp, letterSpacing = 0.sp,
     ),
     displaySmall = TextStyle(
-        fontFamily = Mono, fontWeight = FontWeight.Normal,
+        fontFamily = Sans, fontWeight = FontWeight.Normal,
         fontSize = 36.sp, lineHeight = 44.sp, letterSpacing = 0.sp,
     ),
     headlineLarge = TextStyle(
@@ -63,7 +59,7 @@ val Typography = Typography(
     ),
     labelLarge = TextStyle(
         fontFamily = Sans, fontWeight = FontWeight.Medium,
-        fontSize = 14.sp, lineHeight = 20.sp, letterSpacing = 6.sp,
+        fontSize = 14.sp, lineHeight = 20.sp, letterSpacing = 2.sp,
     ),
     labelMedium = TextStyle(
         fontFamily = Sans, fontWeight = FontWeight.Medium,
@@ -75,11 +71,11 @@ val Typography = Typography(
     ),
 )
 
+// Только для крупных числовых значений (индекс самочувствия)
 val NumericStyle = TextStyle(
-    fontFamily = Mono,
-    fontWeight = FontWeight.Normal,
-    fontSize = 72.sp,
-    lineHeight = 72.sp,
+    fontFamily = FontFamily.Default,
+    fontWeight = FontWeight.Light,
+    fontSize = 80.sp,
+    lineHeight = 80.sp,
     letterSpacing = (-2).sp,
-    fontFeatureSettings = "tnum",
 )

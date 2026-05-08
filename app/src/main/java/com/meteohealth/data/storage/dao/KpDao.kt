@@ -9,7 +9,10 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface KpDao {
     @Query("SELECT * FROM kp_minute ORDER BY ts DESC LIMIT 1")
-    fun observeLatest(): Flow<KpMinuteEntity?>
+    fun observeLatestRaw(): Flow<KpMinuteEntity?>
+
+    @Query("SELECT * FROM kp_minute ORDER BY ts DESC LIMIT 60")
+    fun observeLastHour(): Flow<List<KpMinuteEntity>>
 
     @Query("SELECT * FROM kp_minute WHERE ts >= :sinceEpoch ORDER BY ts ASC")
     fun observeHistory(sinceEpoch: Long): Flow<List<KpMinuteEntity>>

@@ -37,6 +37,7 @@ class HomeViewModel(
                         weather = feed.weather,
                         kp = feed.kp,
                         pressureDelta = feed.pressureDelta6h,
+                        pressureUnit = feed.profile.pressureUnit,
                         recommendations = feed.recommendations,
                     ))
                 }
@@ -56,9 +57,9 @@ class HomeViewModel(
     }
 
     private fun verdictFor(risk: RiskLevel) = when (risk) {
-        RiskLevel.CALM  -> "Спокойно."
-        RiskLevel.WATCH -> "Ровно."
-        RiskLevel.ALERT -> "Следи за давлением."
-        RiskLevel.HIGH  -> "Береги голову."
+        RiskLevel.CALM  -> "Всё в норме, можно не беспокоиться"
+        RiskLevel.WATCH -> "Небольшие изменения, стоит немного поберечься"
+        RiskLevel.ALERT -> "Погода давит — следи за давлением и не перегружайся"
+        RiskLevel.HIGH  -> "Тяжёлый день, лучше отдохнуть и не напрягаться"
     }
 }

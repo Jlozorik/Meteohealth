@@ -76,7 +76,7 @@ private fun HomeContent(state: HomeState, onMenuClick: () -> Unit, onRefresh: ()
                 .verticalScroll(rememberScrollState())
         ) {
             ScoreBlock(state)
-            state.weather?.let { WeatherBlock(it, state.pressureDelta6h) }
+            state.weather?.let { WeatherBlock(it, state.pressureDelta6h, state.pressureUnit) }
             state.kp?.let { KpBlock(it.kp) }
             if (state.recommendations.isNotEmpty()) RecommendationsBlock(state)
         }
@@ -110,11 +110,19 @@ private fun ScoreBlock(state: HomeState) {
 }
 
 @Composable
-private fun WeatherBlock(weather: com.meteohealth.domain.model.WeatherHour, delta: Double) {
+private fun WeatherBlock(
+    weather: com.meteohealth.domain.model.WeatherHour,
+    delta: Double,
+    pressureUnit: com.meteohealth.domain.model.PressureUnit,
+) {
     DividedSection("ПОГОДА") {
         MetricRow("T", "${weather.tempC.toInt()}°", "влажность", "${weather.humidity}%")
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-        val pressureStr = "${weather.pressureHpa.toInt()} гПа"
+        val pressureStr = if (pressureUnit == com.meteohealth.domain.model.PressureUnit.MM_HG) {
+            "${(weather.pressureHpa * 0.750062).toInt()} мм рт.ст."
+        } else {
+            "${weather.pressureHpa.toInt()} гПа"
+        }
         val deltaStr = if (abs(delta) >= 0.1) {
             val sign = if (delta > 0) "+" else ""
             " ($sign${String.format("%.1f", delta)})"

@@ -13,8 +13,12 @@ class KpRepositoryImpl(
     private val service: NoaaSwpcService,
 ) : KpGateway {
 
+    // Усредняем последние 60 минут, чтобы Kp не скакал каждую минуту
     override fun observeLatest(): Flow<KpSample?> =
-        kpDao.observeLatest().map { it?.toDomain() }
+        kpDao.observeLastHour().map { entries ->
+            if (entries.isEmpty()) null
+            else KpSample(ts = entries.first().ts, kp = entries.map { it.kp }.average())
+        }
 
     override fun observeHistory(sinceEpoch: Long): Flow<List<KpSample>> =
         kpDao.observeHistory(sinceEpoch).map { list -> list.map { it.toDomain() } }

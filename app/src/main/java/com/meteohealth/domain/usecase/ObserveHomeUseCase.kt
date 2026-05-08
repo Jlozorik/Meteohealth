@@ -33,7 +33,7 @@ class ObserveHomeUseCase(
 ) {
     operator fun invoke(): Flow<HomeFeed> = combine(
         weatherGateway.observeLatest(),
-        weatherGateway.observeHistory(System.currentTimeMillis() / 1000 - 6 * 3600),
+        weatherGateway.observeHistory(System.currentTimeMillis() / 3_600_000L - 6),
         kpGateway.observeLatest(),
         profileGateway.observe(),
     ) { latest, history, kp, profile ->
