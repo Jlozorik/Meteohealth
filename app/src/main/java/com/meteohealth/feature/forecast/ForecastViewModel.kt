@@ -2,9 +2,11 @@ package com.meteohealth.feature.forecast
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.meteohealth.domain.model.PressureUnit
 import com.meteohealth.domain.model.RiskLevel
 import com.meteohealth.domain.model.WeatherHour
 import com.meteohealth.domain.usecase.ObserveForecastUseCase
+import com.meteohealth.domain.usecase.ObserveProfileUseCase
 import com.meteohealth.domain.wellbeing.RiskClassifier
 import com.meteohealth.domain.wellbeing.WellbeingInput
 import com.meteohealth.domain.wellbeing.WellbeingPipeline
@@ -19,15 +21,22 @@ import java.util.Locale
 
 class ForecastViewModel(
     private val observeForecast: ObserveForecastUseCase,
+    private val observeProfile: ObserveProfileUseCase,
     private val pipeline: WellbeingPipeline,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ForecastState())
     val state: StateFlow<ForecastState> = _state.asStateFlow()
 
-    private val dateFormat = SimpleDateFormat("dd.MM", Locale.getDefault())
+    private val dateFormat = SimpleDateFormat("EE, dd.MM", Locale.getDefault())
 
     init {
+        viewModelScope.launch {
+            observeProfile().collect { profile ->
+                val unit = profile?.pressureUnit ?: PressureUnit.HPA
+                _state.value = _state.value.copy(pressureUnit = unit)
+            }
+        }
         viewModelScope.launch {
             observeForecast()
                 .catch { e -> dispatch(ForecastIntent.ErrorOccurred(e.message ?: "Ошибка")) }
@@ -43,22 +52,25 @@ class ForecastViewModel(
         _state.value = newState
     }
 
-    private fun buildDayRows(
-        hours: List<WeatherHour>,
-        kpValues: List<Double>,
-    ): List<DayRow> {
+    private fun buildDayRows(hours: List<WeatherHour>, kpValues: List<Double>): List<DayRow> {
         val byDay = hours.groupBy { it.hourBucketEpoch / 24 }
         val avgKp = if (kpValues.isEmpty()) 0.0 else kpValues.average()
         return byDay.entries.sortedBy { it.key }.take(5).map { (_, dayHours) ->
             val temps = dayHours.map { it.tempC }
             val pressures = dayHours.map { it.pressureHpa }
-            val avgP = if (pressures.isEmpty()) 0.0 else pressures.average()
+            val avgP = pressures.average()
             val pDelta = if (pressures.size >= 2) pressures.last() - pressures.first() else 0.0
-            val input = WellbeingInput(pDelta, avgKp, 0.0, dayHours.map { it.humidity.toDouble() }.average(), com.meteohealth.domain.model.Profile())
+            val input = WellbeingInput(
+                pressureDelta6h = pDelta,
+                kpIndex = avgKp,
+                tempDelta24h = 0.0,
+                humidity = dayHours.map { it.humidity.toDouble() }.average(),
+                profile = com.meteohealth.domain.model.Profile(),
+            )
             val score = pipeline.compute(input).score
             val risk = RiskClassifier.classify(score)
             DayRow(
-                dateLabel = dateFormat.format(Date(dayHours.first().hourBucketEpoch * 3600 * 1000)),
+                dateLabel = dateFormat.format(Date(dayHours.first().hourBucketEpoch * 3_600_000L)),
                 tempMin = temps.minOrNull() ?: 0.0,
                 tempMax = temps.maxOrNull() ?: 0.0,
                 pressureHpa = avgP,
@@ -70,9 +82,9 @@ class ForecastViewModel(
     }
 
     private fun riskLabel(risk: RiskLevel) = when (risk) {
-        RiskLevel.CALM  -> "ровно"
-        RiskLevel.WATCH -> "следи"
-        RiskLevel.ALERT -> "осторожно"
-        RiskLevel.HIGH  -> "тяжело"
+        RiskLevel.CALM  -> "всё ровно"
+        RiskLevel.WATCH -> "стоит следить"
+        RiskLevel.ALERT -> "будь осторожен"
+        RiskLevel.HIGH  -> "тяжёлый день"
     }
 }

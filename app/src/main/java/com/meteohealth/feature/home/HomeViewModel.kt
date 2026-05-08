@@ -26,6 +26,7 @@ class HomeViewModel(
     val effects = _effects.receiveAsFlow()
 
     init {
+        viewModelScope.launch { runCatching { refreshNow() } }
         viewModelScope.launch {
             observeHome()
                 .catch { e -> dispatch(HomeIntent.ErrorOccurred(e.message ?: "Ошибка")) }
