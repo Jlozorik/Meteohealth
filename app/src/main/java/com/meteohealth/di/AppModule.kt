@@ -9,4 +9,5 @@ val allModules = listOf(
     homeModule,
     forecastModule,
     journalUiModule,
+    settingsUiModule,
 )
